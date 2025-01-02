@@ -94,3 +94,4 @@ EOF
 chmod +x ~/run_sd.sh
 
 echo "Setup complete. Use '~/run_sd.sh' to run Stable Diffusion."
+
