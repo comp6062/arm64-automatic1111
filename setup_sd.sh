@@ -56,10 +56,13 @@ if [ ! -d "$WEBUI_DIR" ]; then
     exit 1
 fi
 
+# Define local IP address explicitly for option 2
+LOCAL_IP="192.168.1.100"  # Replace with your actual local IP address
+
 # Display menu
 echo "Choose an option:"
 echo "1) Run Stable Diffusion locally (127.0.0.1:7860)"
-echo "2) Run Stable Diffusion on local network (local IP:7860)"
+echo "2) Run Stable Diffusion on local network (http://$LOCAL_IP:7860)"
 read -p "Enter your choice (1 or 2): " choice
 
 # Activate virtual environment
@@ -75,7 +78,6 @@ case $choice in
         python launch.py --skip-torch-cuda-test --no-half
         ;;
     2)
-        LOCAL_IP=$(hostname -I | awk '{print $1}')
         echo "Running Stable Diffusion on local network (http://$LOCAL_IP:7860)..."
         python launch.py --skip-torch-cuda-test --no-half --listen
         ;;
@@ -94,4 +96,3 @@ EOF
 chmod +x ~/run_sd.sh
 
 echo "Setup complete. Use '~/run_sd.sh' to run Stable Diffusion."
-
