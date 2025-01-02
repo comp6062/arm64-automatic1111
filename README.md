@@ -17,3 +17,25 @@ After the script completes, run Stable Diffusion with:
 ~/run_sd.sh
 ```
 This approach automates the setup and provides a seamless way to install and manage Stable Diffusion remotely.
+
+
+
+Remote Execution Command:
+
+Using curl:
+```bash
+bash <(curl -sSL https://raw.githubusercontent.com/comp6062/arm64-automatic1111/main/remove_sd.sh)
+```
+Using wget:
+```bash
+bash <(wget -qO- https://raw.githubusercontent.com/comp6062/arm64-automatic1111/main/remove_sd.sh)
+```
+What It Does:
+Stops any running Stable Diffusion processes.
+Deletes:
+Virtual environment (~/stable-diffusion-env).
+WebUI directory (~/stable-diffusion-webui).
+Run script (~/run_sd.sh).
+Optionally removes installed dependencies (python3, git, etc.).
+Runs apt autoremove to clean up any residual packages.
+This ensures a clean system without leftover files or dependencies.
