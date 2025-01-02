@@ -20,7 +20,7 @@ This approach automates the setup and provides a seamless way to install and man
 
 
 
-Remote Execution Command:
+To uninstall: 
 
 Using curl:
 ```bash
