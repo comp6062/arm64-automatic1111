@@ -18,6 +18,10 @@ After the script completes, run Stable Diffusion with:
 ```
 This approach automates the setup and provides a seamless way to install and manage Stable Diffusion remotely.
 
+-----------------------------------------------------------------------------------------------------------------------
+
+
+
 
 
 To uninstall: 
