@@ -1,31 +1,5 @@
 #!/bin/bash
 
-# Update and upgrade the system
-sudo apt update && sudo apt upgrade -y
-
-# Install required packages
-sudo apt install -y python3 python3-pip python3-venv git libgl1 libglib2.0-0
-
-# Create a virtual environment
-python3 -m venv ~/stable-diffusion-env
-
-# Activate the virtual environment
-source ~/stable-diffusion-env/bin/activate
-
-# Clone the Stable Diffusion WebUI repository
-git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git ~/stable-diffusion-webui
-cd ~/stable-diffusion-webui
-
-# Install PyTorch for CPU
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-
-# Install other requirements
-pip install -r requirements.txt
-
-# Create the run script
-cat << 'EOF' > ~/run_sd.sh
-#!/bin/bash
-
 # Define the paths
 WEBUI_DIR="/home/admin/stable-diffusion-webui"
 VENV_DIR="/home/admin/stable-diffusion-env"
@@ -66,16 +40,13 @@ source "$VENV_DIR/bin/activate"
 # Change to the WebUI directory
 cd "$WEBUI_DIR"
 
-# Run based on choice
-case $choice in
-    1)
-        echo "Running Stable Diffusion locally..."
+# Run based on choicein"Running Stable Diffusion locally..."
         python launch.py --skip-torch-cuda-test --no-half
         ;;
     2)
         LOCAL_IP=$(hostname -I | awk '{print $1}')
         echo "Running Stable Diffusion on local network (http://$LOCAL_IP:7860)..."
-        python launch.py --skip-torch-cuda-test --no-half --listen
+        python launch.py --skip-torch-cuda-test --no-half --listen --port 7860 --host $LOCAL_IP
         ;;
     *)
         echo "Invalid choice. Exiting."
@@ -86,6 +57,7 @@ esac
 
 # Cleanup when the process ends
 cleanup
+
 EOF
 
 # Make the run script executable
