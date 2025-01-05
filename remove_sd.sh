@@ -2,11 +2,14 @@
 
 # Function to display a confirmation prompt
 confirm() {
-    read -p "$1 (y/n): " choice
-    case "$choice" in
-        y|Y ) return 0 ;;
-        * ) return 1 ;;
-    esac
+    while true; do
+        read -rp "$1 (y/n): " choice
+        case "$choice" in
+            [yY] ) return 0 ;;
+            [nN] ) return 1 ;;
+            * ) echo "Please enter y or n." ;;
+        esac
+    done
 }
 
 # Define paths
@@ -16,7 +19,7 @@ RUN_SCRIPT="$HOME/run_sd.sh"
 
 # Stop any running Stable Diffusion processes
 echo "Stopping any running Stable Diffusion processes..."
-pkill -f "launch.py" 2>/dev/null || true
+pkill -f "launch.py" 2>/dev/null || echo "No running Stable Diffusion processes found."
 
 # Remove the virtual environment
 if [ -d "$VENV_DIR" ]; then
