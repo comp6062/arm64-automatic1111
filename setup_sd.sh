@@ -22,7 +22,7 @@ pip install -r requirements.txt
 # Download the model file
 MODEL_DIR=~/stable-diffusion-webui/models/Stable-diffusion
 mkdir -p "$MODEL_DIR"
-wget -O "$MODEL_DIR/cyberrealistic_v70.safetensors" "https://vaultsphere.xyz/cyberrealistic_v7.safetensors"
+wget -O "$MODEL_DIR/cyberrealistic_v70.safetensors" "http://www.vaultsphere.xyz/cyberrealistic_v7.safetensors"
 
 # Create the run script
 cat << 'EOF' > ~/run_sd.sh
