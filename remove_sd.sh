@@ -51,4 +51,4 @@ else
     echo "Skipping dependency removal."
 fi
 
-echo "Cleanup complete. Essential GUI packages were preserved."
+echo "Cleanup complete. Essential packages were preserved."
