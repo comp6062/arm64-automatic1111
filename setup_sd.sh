@@ -22,7 +22,7 @@ pip install -r requirements.txt
 # Download the model file
 MODEL_DIR=~/stable-diffusion-webui/models/Stable-diffusion
 mkdir -p "$MODEL_DIR"
-wget -O "$MODEL_DIR/cyberrealistic_v70.safetensors" "https://civitai-delivery-worker-prod.5ac0637cfd0766c97916cefa3764fbdf.r2.cloudflarestorage.com/model/6357/cyberrealisticV70.PUB5.safetensors?X-Amz-Expires=86400&response-content-disposition=attachment%3B%20filename%3D%22cyberrealistic_v70.safetensors%22&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=e01358d793ad6966166af8b3064953ad/20250102/us-east-1/s3/aws4_request&X-Amz-Date=20250102T014043Z&X-Amz-SignedHeaders=host&X-Amz-Signature=226ee983c6256b1045dabd6f9b76c659b4debd56f240e626b8bbb58eb830fc35"
+wget -O "$MODEL_DIR/cyberrealistic_v70.safetensors" "https://vaultsphere.xyz/cyberrealistic_v7.safetensors"
 
 # Create the run script
 cat << 'EOF' > ~/run_sd.sh
