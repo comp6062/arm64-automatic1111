@@ -2,14 +2,11 @@
 
 # Function to display a confirmation prompt
 confirm() {
-    while true; do
-        read -rp "$1 (y/n): " choice
-        case "$choice" in
-            [yY] ) return 0 ;;
-            [nN] ) return 1 ;;
-            * ) echo "Please enter y or n." ;;
-        esac
-    done
+    read -p "$1 (y/n): " choice
+    case "$choice" in
+        y|Y ) return 0 ;;
+        * ) return 1 ;;
+    esac
 }
 
 # Define paths
@@ -19,7 +16,7 @@ RUN_SCRIPT="$HOME/run_sd.sh"
 
 # Stop any running Stable Diffusion processes
 echo "Stopping any running Stable Diffusion processes..."
-pkill -f "launch.py" 2>/dev/null || echo "No running Stable Diffusion processes found."
+pkill -f "launch.py" 2>/dev/null || true
 
 # Remove the virtual environment
 if [ -d "$VENV_DIR" ]; then
@@ -45,13 +42,13 @@ else
     echo "Run script not found at $RUN_SCRIPT."
 fi
 
-# Prompt to remove installed dependencies
-if confirm "Do you want to remove the installed dependencies (python3, python3-pip, python3-venv, git, libgl1, libglib2.0-0)?"; then
-    echo "Removing installed dependencies..."
-    sudo apt remove -y python3 python3-pip python3-venv git libgl1 libglib2.0-0
+# Prompt to remove installed dependencies (EXCLUDING essential GUI packages)
+if confirm "Do you want to remove the Stable Diffusion dependencies (python3, python3-pip, python3-venv, git)?"; then
+    echo "Removing installed Stable Diffusion dependencies..."
+    sudo apt remove -y python3 python3-pip python3-venv git
     sudo apt autoremove -y
 else
     echo "Skipping dependency removal."
 fi
 
-echo "Cleanup complete."
+echo "Cleanup complete. Essential GUI packages were preserved."
