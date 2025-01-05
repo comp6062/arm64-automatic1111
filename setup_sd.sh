@@ -58,8 +58,8 @@ fi
 
 # Display menu
 echo "Choose an option:"
-echo "1) Run Stable Diffusion locally (127.0.0.1:7860)"
-echo "2) Run Stable Diffusion on local network (local IP:7860)"
+echo "1) Run Stable Diffusion locally (http://127.0.0.1:7860)"
+echo "2) Run Stable Diffusion on local network to be run remotely (http://local IP:7860)"
 read -p "Enter your choice (1 or 2): " choice
 
 # Activate virtual environment
