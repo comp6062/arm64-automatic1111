@@ -22,7 +22,7 @@ To Uninstall run:
 ```bash
 ~/remove.sh
 ```
-This approach automates the setup and provides a seamless way to install and manage Stable Diffusion remotely.
+
 
 -----------------------------------------------------------------------------------------------------------------------
 
