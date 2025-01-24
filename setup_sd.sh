@@ -29,8 +29,8 @@ cat << 'EOF' > ~/run_sd.sh
 #!/bin/bash
 
 # Define the paths
-WEBUI_DIR="/home/$USER/stable-diffusion-webui"
-VENV_DIR="/home/$USER/stable-diffusion-env"
+WEBUI_DIR="/home/admin/stable-diffusion-webui"
+VENV_DIR="/home/admin/stable-diffusion-env"
 
 # Function to clean up and deactivate
 cleanup() {
@@ -56,10 +56,13 @@ if [ ! -d "$WEBUI_DIR" ]; then
     exit 1
 fi
 
+# Get the default local IP address
+DEFAULT_LOCAL_IP=$(hostname -I | awk '{print $1}')
+
 # Display menu
 echo "Choose an option:"
-echo "1) Run Stable Diffusion locally (http://127.0.0.1:7860)"
-echo "2) Run Stable Diffusion on local network to be run remotely (http://local IP:7860)"
+echo "1) Run Stable Diffusion locally (127.0.0.1:7860)"
+echo "2) Run Stable Diffusion on local network (http://$DEFAULT_LOCAL_IP:7860)"
 read -p "Enter your choice (1 or 2): " choice
 
 # Activate virtual environment
@@ -75,8 +78,7 @@ case $choice in
         python launch.py --skip-torch-cuda-test --no-half
         ;;
     2)
-        LOCAL_IP=$(hostname -I | awk '{print $1}')
-        echo "Running Stable Diffusion on local network (http://$LOCAL_IP:7860)..."
+        echo "Running Stable Diffusion on local network (http://$DEFAULT_LOCAL_IP:7860)..."
         python launch.py --skip-torch-cuda-test --no-half --listen
         ;;
     *)
@@ -88,6 +90,7 @@ esac
 
 # Cleanup when the process ends
 cleanup
+
 EOF
 
 # Make the run script executable
