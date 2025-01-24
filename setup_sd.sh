@@ -133,4 +133,4 @@ EOF
 
 chmod +x ~/remove.sh
 
-echo "Setup complete. Use ~/run_sd.sh to start Stable Diffusion and ~/remove.sh to clean up."
+echo "Setup complete. Use ~/run_sd.sh to start Stable Diffusion and ~/remove.sh to uninstall."
