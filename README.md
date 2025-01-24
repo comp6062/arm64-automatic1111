@@ -44,14 +44,16 @@ Installs the CPU-only version of PyTorch along with other required Python packag
 Model Download:
 
 Downloads a specific Stable Diffusion model file (cyberrealistic_v7.safetensors) to the appropriate directory.
-Run Script Creation:
+Run Script:
 
-Generates a run_sd.sh script that allows users to:
-Run the WebUI locally (127.0.0.1:7860).
-Host the WebUI on the local network for remote access.
-Uninstall Script Creation:
+Generates a script ~/run_sd.sh that allows users to:
+Run the WebUI locally (127.0.0.1:7860), or 
+host the WebUI on the local network for remote access.
 
-Creates a remove.sh script for completely uninstalling Stable Diffusion WebUI and cleaning up associated files and directories.
+
+Uninstall Script:
+
+Creates a ~/remove.sh script for completely uninstalling Stable Diffusion WebUI and cleaning up associated files and directories.
 Setup Completion:
 
 Provides the user with instructions to start or remove the setup.
