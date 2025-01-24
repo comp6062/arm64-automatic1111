@@ -1,4 +1,4 @@
-1. Run the Setup Script Remotely:
+1. Run the Setup Script:
 
 Using curl:
 ```bash
