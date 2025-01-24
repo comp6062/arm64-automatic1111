@@ -27,8 +27,6 @@ To Uninstall run:
 
 
 Features:
-System Update and Dependency Installation:
-
 Updates the system and installs required packages such as Python, Git, and libraries for Stable Diffusion.
 Virtual Environment Setup:
 
