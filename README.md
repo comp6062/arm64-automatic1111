@@ -16,6 +16,12 @@ After the script completes, run Stable Diffusion with:
 ```bash
 ~/run_sd.sh
 ```
+
+To Uninstall run: 
+
+```bash
+~/remove.sh
+```
 This approach automates the setup and provides a seamless way to install and manage Stable Diffusion remotely.
 
 -----------------------------------------------------------------------------------------------------------------------
