@@ -1,4 +1,4 @@
-Run the Setup Script Remotely
+1. Run the Setup Script Remotely
 To execute the script remotely:
 
 Using curl:
@@ -10,7 +10,7 @@ Using wget:
 ```bash
 wget -qO- https://raw.githubusercontent.com/comp6062/arm64-automatic1111/main/setup_sd.sh | bash
 ```
-3. Usage
+2. Usage
 After the script completes, run Stable Diffusion with:
 
 ```bash
