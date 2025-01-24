@@ -9,8 +9,7 @@ Using wget:
 ```bash
 wget -qO- https://raw.githubusercontent.com/comp6062/arm64-automatic1111/main/setup_sd.sh | bash
 ```
-2. Usage
-After the script completes, run Stable Diffusion with:
+2. After the script completes, to run Stable Diffusion use:
 
 ```bash
 ~/run_sd.sh
