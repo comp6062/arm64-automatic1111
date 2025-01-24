@@ -62,7 +62,7 @@ DEFAULT_LOCAL_IP=$(hostname -I | awk '{print $1}')
 # Display menu
 echo "Choose an option:"
 echo "1) Run Stable Diffusion locally (127.0.0.1:7860)"
-echo "2) Run Stable Diffusion on local network (http://$DEFAULT_LOCAL_IP:7860)"
+echo "2) Run Stable Diffusion remotely on local network (http://$DEFAULT_LOCAL_IP:7860)"
 read -p "Enter your choice (1 or 2): " choice
 
 # Activate virtual environment
@@ -78,7 +78,7 @@ case $choice in
         python launch.py --skip-torch-cuda-test --no-half
         ;;
     2)
-        echo "Running Stable Diffusion on local network (http://$DEFAULT_LOCAL_IP:7860)..."
+        echo "Running Stable Diffusion remotely on local network (http://$DEFAULT_LOCAL_IP:7860)..."
         python launch.py --skip-torch-cuda-test --no-half --listen
         ;;
     *)
