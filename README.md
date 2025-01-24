@@ -37,8 +37,8 @@ Downloads the Stable Diffusion WebUI code from GitHub.
 Installing PyTorch and Requirements:
 
 Installs the CPU-only version of PyTorch along with other required Python packages.
-Model Download:
 
+Model Download:
 Downloads a specific Stable Diffusion model file (cyberrealistic_v7.safetensors) to the appropriate directory.
 Run Script:
 
