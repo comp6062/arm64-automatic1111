@@ -57,8 +57,8 @@ Setup Completion:
 Provides the user with instructions to start or remove the setup.
 
 
-Warning:
-File Size and Download Times: This script downloads a model file (cyberrealistic_v7.safetensors) which may be several gigabytes in size. Depending on your internet connection, the download could take a significant amount of time. Ensure you have enough disk space and a stable internet connection before proceeding.
+!!Warning:
+File Size and Download Times: This script downloads a model file (cyberrealistic_v7.safetensors) which may be several gigabytes in size. Depending on your internet connection, the download could take a significant amount of time. Ensure you have enough disk space and a stable internet connection before proceeding.!!
 
 
 
