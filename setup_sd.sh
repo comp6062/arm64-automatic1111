@@ -1,54 +1,31 @@
 #!/bin/bash
 
-# Define color variables for pretty output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No color
+# Update and upgrade system
+sudo apt update && sudo apt upgrade -y
 
-# Function to show a simulated progress bar
-progress_bar() {
-    echo -e "${RED}$1${NC}"
-    for i in {1..100}; do
-        echo -n "#"
-        sleep 0.05  # Simulate progress with a slight delay
-    done
-    echo -e "\n${GREEN}Done!${NC}"
-}
+# Install necessary dependencies
+sudo apt install -y python3 python3-pip python3-venv git libgl1 libglib2.0-0
 
 # Dynamically determine the user's home directory
 USER_HOME=$(eval echo ~$USER)
 
-# Update and upgrade system
-progress_bar "Updating and upgrading system..."
-sudo apt update && sudo apt upgrade -y
-
-# Install necessary dependencies
-progress_bar "Installing necessary dependencies..."
-sudo apt install -y python3 python3-pip python3-venv git libgl1 libglib2.0-0
-
-# Create and activate the virtual environment
-progress_bar "Setting up virtual environment..."
+# Create and activate a virtual environment inside the user's home directory
 python3 -m venv "$USER_HOME/stable-diffusion-env"
 source "$USER_HOME/stable-diffusion-env/bin/activate"
 
-# Clone the Stable Diffusion WebUI repository
-progress_bar "Cloning Stable Diffusion WebUI repository..."
+# Clone the Stable Diffusion WebUI repository inside the user's home directory
 git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git "$USER_HOME/stable-diffusion-webui"
 cd "$USER_HOME/stable-diffusion-webui"
 
-# Install PyTorch and other dependencies
-progress_bar "Installing PyTorch and other dependencies..."
+# Install PyTorch and other requirements
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 pip install -r requirements.txt
 
 # Download the model file
-progress_bar "Downloading the model file..."
 mkdir -p "$USER_HOME/stable-diffusion-webui/models/Stable-diffusion/"
 wget -O "$USER_HOME/stable-diffusion-webui/models/Stable-diffusion/cyberrealistic_v7.safetensors" "https://vaultsphere.xyz/cyberrealistic_v7.safetensors"
 
 # Create the `run_sd.sh` script
-progress_bar "Creating run_sd.sh script..."
 cat <<EOF > "$USER_HOME/run_sd.sh"
 #!/bin/bash
 
@@ -122,7 +99,6 @@ EOF
 chmod +x "$USER_HOME/run_sd.sh"
 
 # Create the `remove.sh` script
-progress_bar "Creating remove.sh script..."
 cat <<EOF > "$USER_HOME/remove.sh"
 #!/bin/bash
 
@@ -153,18 +129,6 @@ else
     echo "\$USER_HOME/stable-diffusion-env directory does not exist."
 fi
 
-# Remove PyPI cache and other downloaded files
-progress_bar "Cleaning up cached files..."
-if [ -d "\$USER_HOME/.cache/pip" ]; then
-    echo "Removing pip cache..."
-    rm -rf "\$USER_HOME/.cache/pip"
-fi
-
-if [ -d "\$USER_HOME/stable-diffusion-webui/.git" ]; then
-    echo "Removing git cache..."
-    rm -rf "\$USER_HOME/stable-diffusion-webui/.git"
-fi
-
 # Remove the file \$USER_HOME/remove.sh
 if [ -f "\$USER_HOME/remove.sh" ]; then
     echo "Removing \$USER_HOME/remove.sh..."
@@ -178,5 +142,4 @@ EOF
 
 chmod +x "$USER_HOME/remove.sh"
 
-# Final message
-echo -e "${GREEN}Setup complete.${NC} Use ~/run_sd.sh to start Stable Diffusion and ~/remove.sh to uninstall."
+echo "Setup complete. Use ~/run_sd.sh to start Stable Diffusion and ~/remove.sh to uninstall."
