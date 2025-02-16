@@ -6,10 +6,14 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No color
 
-# Function to show progress with red color
+# Function to show a simulated progress bar
 progress_bar() {
     echo -e "${RED}$1${NC}"
-    sleep 2 # Simulate progress delay
+    for i in {1..100}; do
+        echo -n "#"
+        sleep 0.05  # Simulate progress with a slight delay
+    done
+    echo -e "\n${GREEN}Done!${NC}"
 }
 
 # Dynamically determine the user's home directory
@@ -147,6 +151,18 @@ if [ -d "\$USER_HOME/stable-diffusion-env" ]; then
     rm -rf "\$USER_HOME/stable-diffusion-env"
 else
     echo "\$USER_HOME/stable-diffusion-env directory does not exist."
+fi
+
+# Remove PyPI cache and other downloaded files
+progress_bar "Cleaning up cached files..."
+if [ -d "\$USER_HOME/.cache/pip" ]; then
+    echo "Removing pip cache..."
+    rm -rf "\$USER_HOME/.cache/pip"
+fi
+
+if [ -d "\$USER_HOME/stable-diffusion-webui/.git" ]; then
+    echo "Removing git cache..."
+    rm -rf "\$USER_HOME/stable-diffusion-webui/.git"
 fi
 
 # Remove the file \$USER_HOME/remove.sh
