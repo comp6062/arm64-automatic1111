@@ -6,24 +6,27 @@ sudo apt update && sudo apt upgrade -y
 # Install necessary dependencies
 sudo apt install -y python3 python3-pip python3-venv git libgl1 libglib2.0-0
 
-# Create and activate a virtual environment
-python3 -m venv ~/stable-diffusion-env
-source ~/stable-diffusion-env/bin/activate
+# Dynamically determine the user's home directory
+USER_HOME=$(eval echo ~$USER)
 
-# Clone the Stable Diffusion WebUI repository
-git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git ~/stable-diffusion-webui
-cd ~/stable-diffusion-webui
+# Create and activate a virtual environment inside the user's home directory
+python3 -m venv "$USER_HOME/stable-diffusion-env"
+source "$USER_HOME/stable-diffusion-env/bin/activate"
+
+# Clone the Stable Diffusion WebUI repository inside the user's home directory
+git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git "$USER_HOME/stable-diffusion-webui"
+cd "$USER_HOME/stable-diffusion-webui"
 
 # Install PyTorch and other requirements
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 pip install -r requirements.txt
 
 # Download the model file
-mkdir -p ~/stable-diffusion-webui/models/Stable-diffusion/
-wget -O ~/stable-diffusion-webui/models/Stable-diffusion/cyberrealistic_v7.safetensors "https://vaultsphere.xyz/cyberrealistic_v7.safetensors"
+mkdir -p "$USER_HOME/stable-diffusion-webui/models/Stable-diffusion/"
+wget -O "$USER_HOME/stable-diffusion-webui/models/Stable-diffusion/cyberrealistic_v7.safetensors" "https://vaultsphere.xyz/cyberrealistic_v7.safetensors"
 
 # Create the `run_sd.sh` script
-cat <<EOF > ~/run_sd.sh
+cat <<EOF > "$USER_HOME/run_sd.sh"
 #!/bin/bash
 
 # Dynamically determine the user's home directory
@@ -93,16 +96,16 @@ esac
 cleanup
 EOF
 
-chmod +x ~/run_sd.sh
+chmod +x "$USER_HOME/run_sd.sh"
 
 # Create the `remove.sh` script
-cat <<EOF > ~/remove.sh
+cat <<EOF > "$USER_HOME/remove.sh"
 #!/bin/bash
 
 # Dynamically determine the user's home directory
 USER_HOME=\$(eval echo ~$USER)
 
-# Remove the file ~/run_sd.sh
+# Remove the file \$USER_HOME/run_sd.sh
 if [ -f "\$USER_HOME/run_sd.sh" ]; then
     echo "Removing \$USER_HOME/run_sd.sh..."
     rm "\$USER_HOME/run_sd.sh"
@@ -137,6 +140,6 @@ fi
 echo "Cleanup complete."
 EOF
 
-chmod +x ~/remove.sh
+chmod +x "$USER_HOME/remove.sh"
 
 echo "Setup complete. Use ~/run_sd.sh to start Stable Diffusion and ~/remove.sh to uninstall."
