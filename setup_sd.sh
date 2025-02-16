@@ -26,9 +26,12 @@ wget -O ~/stable-diffusion-webui/models/Stable-diffusion/cyberrealistic_v7.safet
 cat <<EOF > ~/run_sd.sh
 #!/bin/bash
 
+# Dynamically determine the user's home directory
+USER_HOME=\$(eval echo ~$USER)
+
 # Define the paths
-WEBUI_DIR="/home/admin/stable-diffusion-webui"
-VENV_DIR="/home/admin/stable-diffusion-env"
+WEBUI_DIR="\$USER_HOME/stable-diffusion-webui"
+VENV_DIR="\$USER_HOME/stable-diffusion-env"
 
 # Function to clean up and deactivate
 cleanup() {
@@ -96,36 +99,39 @@ chmod +x ~/run_sd.sh
 cat <<EOF > ~/remove.sh
 #!/bin/bash
 
+# Dynamically determine the user's home directory
+USER_HOME=\$(eval echo ~$USER)
+
 # Remove the file ~/run_sd.sh
-if [ -f "\$HOME/run_sd.sh" ]; then
-    echo "Removing ~/run_sd.sh..."
-    rm "\$HOME/run_sd.sh"
+if [ -f "\$USER_HOME/run_sd.sh" ]; then
+    echo "Removing \$USER_HOME/run_sd.sh..."
+    rm "\$USER_HOME/run_sd.sh"
 else
-    echo "~/run_sd.sh does not exist."
+    echo "\$USER_HOME/run_sd.sh does not exist."
 fi
 
-# Remove the directory ~/stable-diffusion-webui
-if [ -d "\$HOME/stable-diffusion-webui" ]; then
-    echo "Removing ~/stable-diffusion-webui directory..."
-    rm -rf "\$HOME/stable-diffusion-webui"
+# Remove the directory \$USER_HOME/stable-diffusion-webui
+if [ -d "\$USER_HOME/stable-diffusion-webui" ]; then
+    echo "Removing \$USER_HOME/stable-diffusion-webui directory..."
+    rm -rf "\$USER_HOME/stable-diffusion-webui"
 else
-    echo "~/stable-diffusion-webui directory does not exist."
+    echo "\$USER_HOME/stable-diffusion-webui directory does not exist."
 fi
 
-# Remove the directory ~/stable-diffusion-env
-if [ -d "\$HOME/stable-diffusion-env" ]; then
-    echo "Removing ~/stable-diffusion-env directory..."
-    rm -rf "\$HOME/stable-diffusion-env"
+# Remove the directory \$USER_HOME/stable-diffusion-env
+if [ -d "\$USER_HOME/stable-diffusion-env" ]; then
+    echo "Removing \$USER_HOME/stable-diffusion-env directory..."
+    rm -rf "\$USER_HOME/stable-diffusion-env"
 else
-    echo "~/stable-diffusion-env directory does not exist."
+    echo "\$USER_HOME/stable-diffusion-env directory does not exist."
 fi
 
-# Remove the file ~/remove.sh
-if [ -f "\$HOME/remove.sh" ]; then
-    echo "Removing ~/remove.sh..."
-    rm "\$HOME/remove.sh"
+# Remove the file \$USER_HOME/remove.sh
+if [ -f "\$USER_HOME/remove.sh" ]; then
+    echo "Removing \$USER_HOME/remove.sh..."
+    rm "\$USER_HOME/remove.sh"
 else
-    echo "~/remove.sh does not exist."
+    echo "\$USER_HOME/remove.sh does not exist."
 fi
 
 echo "Cleanup complete."
