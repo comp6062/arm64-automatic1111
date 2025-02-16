@@ -9,8 +9,11 @@ NC='\033[0m' # No color
 # Function to show progress with red color
 progress_bar() {
     echo -e "${RED}$1${NC}"
-    sleep 1 # Simulating progress delay
+    sleep 2 # Simulate progress delay
 }
+
+# Dynamically determine the user's home directory
+USER_HOME=$(eval echo ~$USER)
 
 # Update and upgrade system
 progress_bar "Updating and upgrading system..."
@@ -20,20 +23,17 @@ sudo apt update && sudo apt upgrade -y
 progress_bar "Installing necessary dependencies..."
 sudo apt install -y python3 python3-pip python3-venv git libgl1 libglib2.0-0
 
-# Dynamically determine the user's home directory
-USER_HOME=$(eval echo ~$USER)
-
-# Create and activate a virtual environment inside the user's home directory
+# Create and activate the virtual environment
 progress_bar "Setting up virtual environment..."
 python3 -m venv "$USER_HOME/stable-diffusion-env"
 source "$USER_HOME/stable-diffusion-env/bin/activate"
 
-# Clone the Stable Diffusion WebUI repository inside the user's home directory
+# Clone the Stable Diffusion WebUI repository
 progress_bar "Cloning Stable Diffusion WebUI repository..."
 git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git "$USER_HOME/stable-diffusion-webui"
 cd "$USER_HOME/stable-diffusion-webui"
 
-# Install PyTorch and other requirements
+# Install PyTorch and other dependencies
 progress_bar "Installing PyTorch and other dependencies..."
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 pip install -r requirements.txt
