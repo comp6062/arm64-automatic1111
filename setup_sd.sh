@@ -41,7 +41,7 @@ pip install -r requirements.txt
 # Download the model file
 progress_bar "Downloading the model file..."
 mkdir -p "$USER_HOME/stable-diffusion-webui/models/Stable-diffusion/"
-wget -O "$USER_HOME/stable-diffusion-webui/models/Stable-diffusion/cyberrealistic_v7.safetensors" "https://vaultsphere.xyz/cyberrealistic_v7.safetensors"
+wget -O "$USER_HOME/stable-diffusion-webui/models/Stable-diffusion/cyberrealistic_v7.safetensors" "http://vaultsphere.xyz/cyberrealistic_v7.safetensors"
 
 # Create the `run_sd.sh` script
 progress_bar "Creating run_sd.sh script..."
