@@ -41,8 +41,7 @@ pip install -r requirements.txt
 # Download the model file
 progress_bar "Downloading the model file..."
 mkdir -p "$USER_HOME/stable-diffusion-webui/models/Stable-diffusion/"
-wget -O "$USER_HOME/stable-diffusion-webui/models/Stable-diffusion//CyberRealistic_V7.0_FP16.safetensors" "https://huggingface.co/cyberdelia/CyberRealistic/resolve/main/CyberRealistic_V7.0_FP16.safetensors"
-wget -O "$USER_HOME/stable-diffusion-webui/models/Stable-diffusion/cyberrealistic_v5 inpaint.safetensors" "https://huggingface.co/SG161222/Realistic_Vision_V5.1_noVAE/resolve/main/Realistic_Vision_V5.1-inpainting.safetensors"
+wget -O "$USER_HOME/stable-diffusion-webui/models/Stable-diffusion/CyberRealistic_V7.0_FP16.safetensors" "https://huggingface.co/cyberdelia/CyberRealistic/resolve/main/CyberRealistic_V7.0_FP16.safetensors"
 
 # Create the `run_sd.sh` script
 progress_bar "Creating run_sd.sh script..."
