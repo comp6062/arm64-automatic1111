@@ -163,4 +163,4 @@ EOF
 chmod +x "$USER_HOME/remove_sd.sh"
 
 # Final message
-echo -e "${GREEN}Setup complete.${NC} Use ~/run_sd.sh to start Stable Diffusion and ~/remove.sh to uninstall."
+echo -e "${GREEN}Setup complete.${NC} Use ~/run_sd.sh to start Stable Diffusion and ~/remove_sd.sh to uninstall."
