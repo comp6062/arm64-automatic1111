@@ -41,7 +41,7 @@ pip install -r requirements.txt
 # Download the model file
 progress_bar "Downloading the model file..."
 mkdir -p "$USER_HOME/stable-diffusion-webui/models/Stable-diffusion/"
-wget -O "$USER_HOME/stable-diffusion-webui/models/Stable-diffusion/CyberRealistic_V7.0_FP16.safetensors" "https://civitai-delivery-worker-prod.5ac0637cfd0766c97916cefa3764fbdf.r2.cloudflarestorage.com/model/26957/realisticVisionV51.qPOH.safetensors?X-Amz-Expires=86400&response-content-disposition=attachment%3B%20filename%3D%22realisticVisionV60B1_v51HyperVAE.safetensors%22&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=e01358d793ad6966166af8b3064953ad/20250323/us-east-1/s3/aws4_request&X-Amz-Date=20250323T213305Z&X-Amz-SignedHeaders=host&X-Amz-Signature=da4665c8d8d169d864bbe71e9a282da8399d74be8e7074808aabd454563e571f"
+wget -O "$USER_HOME/stable-diffusion-webui/models/Stable-diffusion/CyberRealistic_V7.0_FP16.safetensors" "https://civitai.com/api/download/models/501240?type=Model&format=SafeTensor&size=pruned&fp=fp16"
 
 # Create the `run_sd.sh` script
 progress_bar "Creating run_sd.sh script..."
