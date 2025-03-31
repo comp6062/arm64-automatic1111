@@ -41,7 +41,7 @@ pip install -r requirements.txt
 # Download the model file
 progress_bar "Downloading the model file..."
 mkdir -p "$USER_HOME/stable-diffusion-webui/models/Stable-diffusion/"
-wget -O "$USER_HOME/stable-diffusion-webui/models/Stable-diffusion/CyberRealistic_V7.0_FP16.safetensors" "https://civitai.com/api/download/models/501240?type=Model&format=SafeTensor&size=pruned&fp=fp16"
+wget -O "$USER_HOME/stable-diffusion-webui/models/Stable-diffusion/CyberRealistic_V7.0_FP16.safetensors" "https://huggingface.co/cyberdelia/CyberRealistic/resolve/main/CyberRealistic_V7.0_FP16.safetensors"
 
 # Create the `run_sd.sh` script
 progress_bar "Creating run_sd.sh script..."
@@ -117,9 +117,9 @@ EOF
 
 chmod +x "$USER_HOME/run_sd.sh"
 
-# Create the `remove_sd.sh` script
-progress_bar "Creating remove_sd.sh script..."
-cat <<EOF > "$USER_HOME/remove_sd.sh"
+# Create the `remove.sh` script
+progress_bar "Creating remove.sh script..."
+cat <<EOF > "$USER_HOME/remove.sh"
 #!/bin/bash
 
 # Dynamically determine the user's home directory
@@ -149,18 +149,18 @@ else
     echo "\$USER_HOME/stable-diffusion-env directory does not exist."
 fi
 
-# Remove the file \$USER_HOME/remove_sd.sh
-if [ -f "\$USER_HOME/remove_sd.sh" ]; then
-    echo "Removing \$USER_HOME/remove_sd
-    rm "\$USER_HOME/remove_sd.sh"
+# Remove the file \$USER_HOME/remove.sh
+if [ -f "\$USER_HOME/remove.sh" ]; then
+    echo "Removing \$USER_HOME/remove.sh..."
+    rm "\$USER_HOME/remove.sh"
 else
-    echo "\$USER_HOME/remove_sd.sh does not exist."
+    echo "\$USER_HOME/remove.sh does not exist."
 fi
 
 echo "Cleanup complete."
 EOF
 
-chmod +x "$USER_HOME/remove_sd.sh"
+chmod +x "$USER_HOME/remove.sh"
 
 # Final message
-echo -e "${GREEN}Setup complete.${NC} Use ~/run_sd.sh to start Stable Diffusion and ~/remove_sd.sh to uninstall."
+echo -e "${GREEN}Setup complete.${NC} Use ~/run_sd.sh to start Stable Diffusion and ~/remove.sh to uninstall."
