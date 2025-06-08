@@ -1,4 +1,5 @@
-Install Stable Diffusion on a Raspberry Pi
+Install Stable Diffusion on a Raspberry Pi.
+
 This script fully automates the installation of AUTOMATIC1111's Stable Diffusion WebUI on a Raspberry Pi (optimized for Pi 5 with 64-bit OS). It sets up everything needed to run Stable Diffusion in CPU mode, including dependencies, models, a Python virtual environment, and convenient launch/uninstall scripts.
 
 🧰 What This Script Does:
