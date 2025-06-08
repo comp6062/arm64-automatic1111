@@ -30,7 +30,7 @@ Completely offline (localhost only)
 
 Or uninstall the setup
 
-remove.sh – Cleanly removes all installed files and environments
+
 
 🚀 How to Use After Installation
 Run:
