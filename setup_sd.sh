@@ -100,7 +100,7 @@ case "$choice" in
         source "$VENV_DIR/bin/activate"
         cd "$WEBUI_DIR"
         echo -e "Access it at: http://127.0.0.1:7860"
-        python launch.py --skip-torch-cuda-test --no-half --listen --skip-install
+        python launch.py --skip-torch-cuda-test --no-half --skip-install
         cleanup
         ;;
     3)
