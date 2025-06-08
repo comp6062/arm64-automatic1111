@@ -79,8 +79,8 @@ if [ ! -d "$WEBUI_DIR" ]; then
 fi
 
 echo -e "${YELLOW}Select an option:${NC}"
-echo "1) Run connected to the internet"
-echo "2) Run completely offline"
+echo "1) Run connected to the internet (http://\$DEFAULT_LOCAL_IP:7860)"
+echo "2) Run completely offline (127.0.0.1:7860)"
 echo "3) Uninstall"
 echo "q) Quit"
 read -p "Enter your choice: " choice
