@@ -3,6 +3,7 @@ Install Stable Diffusion on a Raspberry Pi
 This script fully automates the installation of AUTOMATIC1111's Stable Diffusion WebUI on a Raspberry Pi (optimized for Pi 5 with 64-bit OS). It sets up everything needed to run Stable Diffusion in CPU mode, including dependencies, models, a Python virtual environment, and convenient launch/uninstall scripts.
 
 🧰 What This Script Does:
+
 ✅ Updates and upgrades your system
 
 ✅ Installs all necessary packages and Python tools
@@ -15,9 +16,9 @@ This script fully automates the installation of AUTOMATIC1111's Stable Diffusion
 
 ✅ Downloads two pre-configured models:
 
-CyberRealistic V7.0
+-CyberRealistic V7.0
 
-Realistic Vision V5.1 (Inpainting)
+-Realistic Vision V5.1 (Inpainting)
 
 ✅ Creates two helper scripts:
 
@@ -37,6 +38,7 @@ Run:
 
 ~/run_sd.sh
 Choose how you want to launch Stable Diffusion. Access the WebUI via your browser on port 7860.
+
 
 
 ⚠️ Notes:
