@@ -107,7 +107,7 @@ case "$choice" in
         echo -e "${RED}Uninstalling...${NC}"
         bash "$USER_HOME/remove.sh"
         ;;
-    q|Q)
+    4)
         echo -e "${YELLOW}Quitting.${NC}"
         exit 0
         ;;
