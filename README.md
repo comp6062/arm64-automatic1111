@@ -37,7 +37,7 @@ Run:
 
 
 ~/run_sd.sh
-Choose how you want to launch Stable Diffusion. Access the WebUI via your browser on port 7860.
+Choose how you want to launch Stable Diffusion. Access the WebUI via your browser on port 7860. (First time running it is suggested to run with internet access to update the model files)
 
 
 
@@ -46,7 +46,7 @@ This version runs on CPU only (no GPU acceleration).
 
 Best performance on Raspberry Pi 5 with active cooling and enough RAM.
 
-First-time startup may take several minutes.
+First-time startup may take several minutes. 
 
 
 1. Run the Setup Script:
