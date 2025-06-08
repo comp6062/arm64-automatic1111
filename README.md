@@ -37,7 +37,9 @@ Run:
 
 
 ~/run_sd.sh
-Choose how you want to launch Stable Diffusion. Access the WebUI via your browser on port 7860. (First time running it is suggested to run with internet access to update the model files)
+Choose how you want to launch Stable Diffusion. Access the WebUI via your browser on port 7860. 
+
+(First time running it is suggested to run with internet access to update the model files)
 
 
 
