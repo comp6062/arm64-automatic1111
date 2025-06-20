@@ -23,7 +23,7 @@ This script fully automates the installation of AUTOMATIC1111's Stable Diffusion
 
 -Realistic Vision V5.1 (Inpainting)
 
-✅ Creates two helper scripts:
+✅ Creates a helper scripts:
 
 run_sd.sh – A user-friendly menu to run Stable Diffusion either:
 
