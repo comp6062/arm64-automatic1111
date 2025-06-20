@@ -25,7 +25,7 @@ This script fully automates the installation of AUTOMATIC1111's Stable Diffusion
 
 ✅ Creates a helper scripts:
 
-run_sd.sh – A user-friendly menu to run Stable Diffusion either:
+~/run_sd.sh – A user-friendly menu to run Stable Diffusion either:
 
 With internet (LAN access)
 
