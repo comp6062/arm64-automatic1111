@@ -1,4 +1,4 @@
-* How to run Stable Diffusion on Raspberry Pi 5 *
+How to run Stable Diffusion on Raspberry Pi 5
 
 
 Install Stable Diffusion on a Raspberry Pi
