@@ -92,7 +92,7 @@ case "$choice" in
         cd "$WEBUI_DIR"
         DEFAULT_LOCAL_IP=$(hostname -I | awk '{print $1}')
         echo -e "Access it at: http://$DEFAULT_LOCAL_IP:7860"
-        python launch.py --skip-torch-cuda-test --no-half --listen
+        python launch.py --skip-torch-cuda-test --no-half --listen --port 80
         cleanup
         ;;
     2)
@@ -100,7 +100,7 @@ case "$choice" in
         source "$VENV_DIR/bin/activate"
         cd "$WEBUI_DIR"
         echo -e "Access it at: http://127.0.0.1:7860"
-        python launch.py --skip-torch-cuda-test --no-half --skip-install
+        python launch.py --skip-torch-cuda-test --no-half --skip-install --port 80
         cleanup
         ;;
     3)
