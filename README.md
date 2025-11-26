@@ -222,3 +222,237 @@ This repository provides:
 - A local SD Outpaint Helper GUI
 - Automatic model downloads
 - Clean uninstall options
+
+
+# 📘 Outpaint Helper – Full Feature Reference & Usage Guide
+
+The **SD Outpaint Helper** is a standalone local GUI that simplifies outpainting while using your existing AUTOMATIC1111 install.  
+This section explains **every option, setting, and control** so users understand exactly how the tool works.
+
+---
+
+## 🎨 Overview
+
+The Outpaint Helper allows you to:
+
+- Load an existing image  
+- Add **padding** on any side  
+- Automatically create an expanded canvas  
+- Automatically generate the **mask** required by A1111  
+- Send the request to Stable Diffusion’s **img2img inpaint API**  
+- Save the outpainted result  
+
+All generation happens through:
+
+```text
+http://127.0.0.1:7860/sdapi/v1/img2img
+```
+
+Stable Diffusion **must** be running before using the helper.
+
+---
+
+# 🖼️ Base Image Section
+
+## Load Image…
+
+Opens a file picker to select your base image.  
+Supported formats:
+
+- PNG  
+- JPG / JPEG  
+- WEBP  
+- BMP  
+
+When the image loads:
+
+- The file path appears  
+- The original resolution is displayed (e.g., `1024 x 768`)  
+- The Generate button is enabled  
+
+---
+
+# 📏 Padding (Outpaint Area)
+
+This section determines **how much additional canvas to add** on each side.
+
+| Setting | Meaning |
+|--------|---------|
+| **Top** | Add vertical space above the image |
+| **Bottom** | Add vertical space below the image |
+| **Left** | Add horizontal space on the left |
+| **Right** | Add horizontal space on the right |
+
+Padding is in **pixels**.
+
+### Example
+
+To extend the image only to the left and right:
+
+```text
+Top:    0
+Bottom: 0
+Left:   256
+Right:  256
+```
+
+To extend on all sides:
+
+```text
+Top:    256
+Bottom: 256
+Left:   256
+Right:  256
+```
+
+Padding of **0 in all fields** triggers a warning because no canvas expansion will occur.
+
+---
+
+# 🧠 Stable Diffusion Parameters
+
+These directly affect the generation quality and style.
+
+## Sampler
+
+Determines how the model denoises during generation.  
+Common options:
+
+- **Euler a** (default – great for quick outpaint)  
+- **DPM++ 2M Karras**  
+- **DPM++ SDE Karras**  
+- **Euler**  
+
+For outpainting, **Euler a** is the most stable.
+
+---
+
+## Steps
+
+How many denoising iterations A1111 performs.
+
+- Typical range: **20–40**  
+- Higher = more detail, slower  
+- Lower = faster, less accurate  
+
+---
+
+## CFG Scale (Classifier-Free Guidance)
+
+How strongly Stable Diffusion follows your prompt.
+
+- **7.0** is ideal for outpainting  
+- Lower = more like the original image  
+- Higher = more forced by the prompt  
+
+---
+
+## Denoising Strength
+
+Controls how much of the original image is “changed”.
+
+- **0.45–0.60** — ideal outpainting range  
+- Lower = preserves original style more  
+- Higher = generates wilder variations  
+
+---
+
+# ✏️ Prompts
+
+## Prompt
+
+What you want the model to generate.  
+Defaults to:
+
+```text
+seamless extension of the scene, same style, same lighting, highly detailed, outpaint background
+```
+
+This encourages continuity with the source image.
+
+You can customize it based on the content:
+
+- Landscapes: `wide-open scenery, matching lighting, natural background`  
+- Food: `food photography, shallow depth of field, appetizing presentation`  
+- Portraits: `same face, same clothes, studio lighting, continuous background`  
+
+---
+
+## Negative Prompt
+
+What the model should avoid.
+
+Defaults include:
+
+```text
+lowres, blurry, distorted, deformed, bad anatomy, artifacts, watermark, text
+```
+
+This helps suppress common outpainting errors.
+
+---
+
+# 🖌️ What Happens Internally (Simplified)
+
+When you click **Generate Outpaint**:
+
+1. A padded canvas (transparent around the edges) is created  
+2. A mask is generated where:
+   - **White = areas TO modify** (the padding)
+   - **Black = protected original image**
+3. Both are encoded to Base64  
+4. An img2img request is sent to:
+
+   ```text
+   POST /sdapi/v1/img2img
+   ```
+
+5. The result is decoded and shown in a Save dialog  
+
+Users do **not** need to manage any masks manually — the tool handles it.
+
+---
+
+# 💾 Saving the Final Image
+
+After generation:
+
+- A Save dialog appears  
+- Default format: **PNG**  
+- The Save button writes the processed outpainted image to disk  
+- If canceled, the result is still held in memory until the next generation  
+
+---
+
+# 🚫 Error Handling / API Messages
+
+The helper will show popups for:
+
+- Stable Diffusion not running  
+- Bad API connection  
+- Invalid padding values  
+- Corrupt images  
+- Other runtime errors  
+
+The status bar always displays:
+
+- What the tool is doing  
+- Any critical errors  
+
+---
+
+# 🧹 Uninstalling the Helper
+
+Just the helper (NOT AUTOMATIC1111):
+
+```bash
+sudo sd-outpaint --uninstall
+```
+
+This removes:
+
+- `/opt/sd-outpaint`  
+- `/usr/local/bin/sd-outpaint`  
+- `/usr/share/applications/sd-outpaint.desktop`  
+
+Automatic1111 remains untouched.
