@@ -1,458 +1,390 @@
-# Stable Diffusion Automatic1111 (ARM64) — Full Installer + Outpaint Helper
+⭐ Stable Diffusion Automatic1111 (ARM64) — Full Installer + Outpaint Helper
+CPU-Only • ARM64 • Raspberry Pi Ready • Fully Automated
 
-This project provides a fully automated, zero-input installation of:
 
-- AUTOMATIC1111 Stable Diffusion WebUI (CPU-only, ARM64)
-- Unified launcher script (`run_sd.sh`) with Internet/offline modes **and API enabled**
-- Automatic model installation
-- SD Outpaint Helper — a local GUI tool for simple outpainting using A1111’s API
-- Clean uninstall options for both A1111 and the helper
+
+
+
+
+
+
+
+
+
+
+
+
+A completely automated ARM64 installer for AUTOMATIC1111 Stable Diffusion WebUI (CPU-only) plus the SD Outpaint Helper GUI, with full API support, offline/online launch modes, automatic model downloads, and clean uninstall options.
 
 Designed for:
 
-- Raspberry Pi 4 / 5
-- ARM64 SBCs
-- Systems without GPU acceleration
-- Users who want a simple, repeatable installation of Stable Diffusion on ARM
+Raspberry Pi 4 / 5
 
-## Features
+ARM64 SBCs
 
-### 1. Fully Automated A1111 Installation (CPU-only, ARM64)
+CPU-only environments
+
+Users who want a simple, repeatable, zero-input Stable Diffusion setup
+
+📚 Table of Contents
+
+Overview
+
+Features
+
+Automated A1111 Installation
+
+Unified Launcher (run_sd.sh)
+
+Outpaint Helper GUI
+
+Automatic Model Installation
+
+Installation
+
+Using SD Outpaint Helper
+
+API Details
+
+Uninstall
+
+Outpaint Helper — Full Feature Reference
+
+Base Image
+
+Padding
+
+Parameters
+
+Prompts
+
+Masking Logic
+
+Saving
+
+Errors
+
+Uninstall Helper
+
+Summary
+
+Overview
+
+This project provides a fully automated, zero-input setup for:
+
+AUTOMATIC1111 Stable Diffusion WebUI (CPU-only ARM64)
+
+Unified launcher with online/offline modes and API enabled
+
+Automatic Realistic Vision inpainting model install
+
+Local Outpaint Helper GUI tool
+
+Clean uninstall scripts for both A1111 and the helper
+
+Everything works completely offline after install.
+
+Features
+1. Fully Automated A1111 Installation (CPU-only, ARM64)
 
 The installer:
 
-- Creates a Python virtual environment
-- Clones AUTOMATIC1111 Stable Diffusion WebUI
-- Installs CPU-compatible Python dependencies
-- Installs required system packages
-- Downloads models automatically
-- Enables API support by default via the launcher
+Creates a Python virtual environment
 
-No manual configuration required.
+Clones A1111 Stable Diffusion WebUI
 
-### 2. Unified Launcher (`~/run_sd.sh`) with API ON
+Installs CPU-only dependencies
 
-After installation, start A1111 using:
+Installs required system packages
 
-```bash
+Downloads inpainting & realism models
+
+Enables API mode automatically
+
+No configuration needed.
+
+2. Unified Launcher (~/run_sd.sh) with API ON
+
+Start Stable Diffusion anytime with:
+
 ~/run_sd.sh
-```
 
-You’ll see a menu:
 
-```text
-1) Run connected to the internet (http://Local_IP:7860, API ON)
-2) Run completely offline (127.0.0.1:7860, API ON)
+Menu:
+
+1) Run connected to the internet (LAN mode, API ON)
+2) Run completely offline (local mode, API ON)
 3) Uninstall
 4) Quit
-```
 
-Mode 1 — LAN mode:
+Mode 1 — LAN Mode:
+python launch.py --skip-torch-cuda-test --no-half --listen --api
 
-- Activates the venv
-- Runs the WebUI with:
 
-  ```bash
-  python launch.py --skip-torch-cuda-test --no-half --listen --api
-  ```
+Accessible from any device on your network.
 
-- Binds to all interfaces so other devices on your LAN can access it
-- Prints:
+Mode 2 — Offline Mode:
+python launch.py --skip-torch-cuda-test --no-half --api
 
-  - `Access it at: http://<your_local_ip>:7860`
-  - `API endpoint:  http://<your_local_ip>:7860/sdapi/v1/...`
 
-Mode 2 — Offline mode:
+Runs STRICTLY on 127.0.0.1.
 
-- Activates the venv
-- Runs the WebUI with:
+Mode 3 — Uninstall
 
-  ```bash
-  python launch.py --skip-torch-cuda-test --no-half --api
-  ```
+Removes the entire A1111 installation.
 
-- Binds to `127.0.0.1` only (local-only)
-- Prints:
+3. SD Outpaint Helper
 
-  - `Access it at: http://127.0.0.1:7860`
-  - `API endpoint:  http://127.0.0.1:7860/sdapi/v1/...`
+A standalone GUI app that:
 
-Mode 3 — Uninstall A1111:
+Loads images
 
-- Calls the uninstall script created by the installer
-- Removes the Stable Diffusion WebUI directory
-- Removes the virtual environment
-- Removes the helper run/uninstall scripts created by that flow
+Adds padding on any side
 
-Mode 4 — Quit:
+Auto-generates masks
 
-- Exits without launching anything.
+Sends img2img inpainting requests to A1111
 
-### 3. SD Outpaint Helper
+Saves generated outpaints
 
-A local GUI application that talks to your A1111 instance via API and simplifies outpainting.
+Run it with:
 
-It lets you:
-
-- Load an image from disk
-- Add padding on any side (top / bottom / left / right)
-- Automatically create an expanded canvas and mask
-- Call `/sdapi/v1/img2img` on your local A1111
-- Save the outpainted result as a new PNG
-- Control sampler, steps, CFG scale, and denoising strength
-- Edit prompt and negative prompt
-
-The helper expects A1111 to be running at:
-
-```text
-http://127.0.0.1:7860
-```
-
-You can run it with:
-
-```bash
 sd-outpaint
-```
 
-To uninstall just the helper:
 
-```bash
+Uninstall it with:
+
 sudo sd-outpaint --uninstall
-```
 
-### 4. Models Installed Automatically
+4. Models Installed Automatically
 
-By default, the installer downloads:
+Installer downloads:
 
-- `Realistic_Vision_V5.1-inpainting.safetensors`
-- `CyberRealistic_V7.0_FP16.safetensors`
+Realistic_Vision_V5.1-inpainting.safetensors
 
-If `CyberRealistic_V7.0_FP16.safetensors` is corrupted or partially downloaded, A1111 may show safetensors errors. This does not affect the helper if you are using the Realistic Vision inpainting model.
+CyberRealistic_V7.0_FP16.safetensors
 
-You can remove the broken file with:
+If CyberRealistic becomes corrupted, remove it:
 
-```bash
 rm ~/stable-diffusion-webui/models/Stable-diffusion/CyberRealistic_V7.0_FP16.safetensors
-```
 
-## Installation
+Installation
 
-You can install everything (A1111 + Outpaint Helper) with:
+Install everything with:
 
-```bash
 curl -sSL https://raw.githubusercontent.com/comp6062/arm64-automatic1111/main/setup_sd.sh | bash
-```
 
-or:
 
-```bash
+Or:
+
 wget -qO- https://raw.githubusercontent.com/comp6062/arm64-automatic1111/main/setup_sd.sh | bash
-```
 
-The script will:
 
-- Install dependencies
-- Create a Python virtual environment
-- Clone AUTOMATIC1111’s WebUI
-- Install Python requirements
-- Download models
-- Create `~/run_sd.sh` (with API-enabled modes)
-- Install the SD Outpaint Helper into `/opt/sd-outpaint`
-- Create the `sd-outpaint` launcher and desktop entry
+The script:
 
-## Using SD Outpaint Helper
+Installs dependencies
 
-1. Start A1111 using `~/run_sd.sh` (option 1 or 2).
-2. Run the helper:
+Clones A1111
 
-   ```bash
-   sd-outpaint
-   ```
+Creates a venv
 
-3. In the GUI:
-   - Click **Load Image…** and select an image
-   - Set padding for top/bottom/left/right
-   - Adjust sampler, steps, CFG, and denoising
-   - Edit prompt and negative prompt
-   - Click **Generate Outpaint**
-   - Choose where to save the result
+Installs requirements
 
-## API Details
+Downloads models
 
-The launcher starts A1111 with `--api` enabled in both modes.
+Installs Outpaint Helper to /opt/sd-outpaint
 
-You can test the API by visiting:
+Creates launchers and desktop shortcuts
 
-```text
-http://127.0.0.1:7860/sdapi/v1/sd-models
-```
+Using SD Outpaint Helper
 
-(or replace `127.0.0.1` with your LAN IP if running in mode 1).
+Start A1111:
 
-If you see JSON, the API is working.
-
-## Uninstall
-
-Uninstall A1111 only:
-
-```bash
 ~/run_sd.sh
-# choose option 3
-```
 
-Uninstall Outpaint Helper only:
 
-```bash
+Run the helper:
+
+sd-outpaint
+
+
+In the GUI:
+
+Load image
+
+Set padding
+
+Adjust sampler / steps / CFG / denoise
+
+Edit prompts
+
+Click Generate Outpaint
+
+Save result
+
+API Details
+
+A1111 runs with:
+
+--api
+
+
+Test API:
+
+http://127.0.0.1:7860/sdapi/v1/sd-models
+
+
+Produces JSON if working.
+
+Uninstall
+Remove A1111:
+~/run_sd.sh   # choose option 3
+
+Remove Outpaint Helper:
 sudo sd-outpaint --uninstall
-```
 
-Uninstall both:
+Remove both:
 
-```bash
-~/run_sd.sh   # option 3
-sudo sd-outpaint --uninstall
-```
+Run both commands above.
 
-## Summary
+📘 Outpaint Helper – Full Feature Reference & Usage Guide
 
-This repository provides:
+Below is the entire detailed guide — reorganized but unchanged in meaning.
 
-- A fully automated installer for AUTOMATIC1111 Stable Diffusion WebUI on ARM64 (CPU-only)
-- A unified launcher script with Internet/offline modes and API support
-- A local SD Outpaint Helper GUI
-- Automatic model downloads
-- Clean uninstall options
-
-
-# 📘 Outpaint Helper – Full Feature Reference & Usage Guide
-
-The **SD Outpaint Helper** is a standalone local GUI that simplifies outpainting while using your existing AUTOMATIC1111 install.  
-This section explains **every option, setting, and control** so users understand exactly how the tool works.
-
----
-
-## 🎨 Overview
+🎨 Overview
 
 The Outpaint Helper allows you to:
 
-- Load an existing image  
-- Add **padding** on any side  
-- Automatically create an expanded canvas  
-- Automatically generate the **mask** required by A1111  
-- Send the request to Stable Diffusion’s **img2img inpaint API**  
-- Save the outpainted result  
+Load an image
 
-All generation happens through:
+Add padding
 
-```text
+Automatically generate masks
+
+Send img2img inpaint requests
+
+Save results
+
+API endpoint used:
+
 http://127.0.0.1:7860/sdapi/v1/img2img
-```
 
-Stable Diffusion **must** be running before using the helper.
 
----
+A1111 must be running.
 
-# 🖼️ Base Image Section
+🖼️ Base Image Section
+Load Image…
 
-## Load Image…
+Supports: PNG, JPG, JPEG, WEBP, BMP.
 
-Opens a file picker to select your base image.  
-Supported formats:
+Displays:
 
-- PNG  
-- JPG / JPEG  
-- WEBP  
-- BMP  
+File path
 
-When the image loads:
+Original resolution
 
-- The file path appears  
-- The original resolution is displayed (e.g., `1024 x 768`)  
-- The Generate button is enabled  
+Enables Generate button
 
----
+📏 Padding (Outpaint Area)
 
-# 📏 Padding (Outpaint Area)
+Controls added canvas around your image.
 
-This section determines **how much additional canvas to add** on each side.
+Field	Purpose
+Top	Add space above
+Bottom	Add space below
+Left	Extend left
+Right	Extend right
 
-| Setting | Meaning |
-|--------|---------|
-| **Top** | Add vertical space above the image |
-| **Bottom** | Add vertical space below the image |
-| **Left** | Add horizontal space on the left |
-| **Right** | Add horizontal space on the right |
+Padding is in pixels.
 
-Padding is in **pixels**.
+🧠 Stable Diffusion Parameters
+Sampler
 
-### Example
+Recommended: Euler a
 
-To extend the image only to the left and right:
+Steps
 
-```text
-Top:    0
-Bottom: 0
-Left:   256
-Right:  256
-```
+20–40 typical.
 
-To extend on all sides:
+CFG Scale
 
-```text
-Top:    256
-Bottom: 256
-Left:   256
-Right:  256
-```
+7.0 ideal.
 
-Padding of **0 in all fields** triggers a warning because no canvas expansion will occur.
+Denoising Strength
 
----
+0.45–0.60 for stable outpaints.
 
-# 🧠 Stable Diffusion Parameters
-
-These directly affect the generation quality and style.
-
-## Sampler
-
-Determines how the model denoises during generation.  
-Common options:
-
-- **Euler a** (default – great for quick outpaint)  
-- **DPM++ 2M Karras**  
-- **DPM++ SDE Karras**  
-- **Euler**  
-
-For outpainting, **Euler a** is the most stable.
-
----
-
-## Steps
-
-How many denoising iterations A1111 performs.
-
-- Typical range: **20–40**  
-- Higher = more detail, slower  
-- Lower = faster, less accurate  
-
----
-
-## CFG Scale (Classifier-Free Guidance)
-
-How strongly Stable Diffusion follows your prompt.
-
-- **7.0** is ideal for outpainting  
-- Lower = more like the original image  
-- Higher = more forced by the prompt  
-
----
-
-## Denoising Strength
-
-Controls how much of the original image is “changed”.
-
-- **0.45–0.60** — ideal outpainting range  
-- Lower = preserves original style more  
-- Higher = generates wilder variations  
-
----
-
-# ✏️ Prompts
-
-## Prompt
-
-What you want the model to generate.  
-Defaults to:
-
-```text
+✏️ Prompts
+Default Prompt:
 seamless extension of the scene, same style, same lighting, highly detailed, outpaint background
-```
 
-This encourages continuity with the source image.
-
-You can customize it based on the content:
-
-- Landscapes: `wide-open scenery, matching lighting, natural background`  
-- Food: `food photography, shallow depth of field, appetizing presentation`  
-- Portraits: `same face, same clothes, studio lighting, continuous background`  
-
----
-
-## Negative Prompt
-
-What the model should avoid.
-
-Defaults include:
-
-```text
+Default Negative Prompt:
 lowres, blurry, distorted, deformed, bad anatomy, artifacts, watermark, text
-```
 
-This helps suppress common outpainting errors.
+🖌️ Internal Logic
 
----
+When generating:
 
-# 🖌️ What Happens Internally (Simplified)
+Canvas padded
 
-When you click **Generate Outpaint**:
+Mask created
 
-1. A padded canvas (transparent around the edges) is created  
-2. A mask is generated where:
-   - **White = areas TO modify** (the padding)
-   - **Black = protected original image**
-3. Both are encoded to Base64  
-4. An img2img request is sent to:
+Base64 encoded
 
-   ```text
-   POST /sdapi/v1/img2img
-   ```
+Sent to /sdapi/v1/img2img
 
-5. The result is decoded and shown in a Save dialog  
+Result decoded and saved
 
-Users do **not** need to manage any masks manually — the tool handles it.
+💾 Saving
 
----
+Save dialog appears
 
-# 💾 Saving the Final Image
+PNG output
 
-After generation:
+Cancelling keeps result until overwritten
 
-- A Save dialog appears  
-- Default format: **PNG**  
-- The Save button writes the processed outpainted image to disk  
-- If canceled, the result is still held in memory until the next generation  
+🚫 Error Handling
 
----
+Alerts for:
 
-# 🚫 Error Handling / API Messages
+SD not running
 
-The helper will show popups for:
+Bad padding
 
-- Stable Diffusion not running  
-- Bad API connection  
-- Invalid padding values  
-- Corrupt images  
-- Other runtime errors  
+Bad connection
 
-The status bar always displays:
+Invalid images
 
-- What the tool is doing  
-- Any critical errors  
+Runtime errors
 
----
+Status bar shows warnings and progress.
 
-# 🧹 Uninstalling the Helper
-
-Just the helper (NOT AUTOMATIC1111):
-
-```bash
+🧹 Uninstalling the Helper
 sudo sd-outpaint --uninstall
-```
 
-This removes:
 
-- `/opt/sd-outpaint`  
-- `/usr/local/bin/sd-outpaint`  
-- `/usr/share/applications/sd-outpaint.desktop`  
+Removes:
 
-Automatic1111 remains untouched.
+/opt/sd-outpaint
+
+/usr/local/bin/sd-outpaint
+
+/usr/share/applications/sd-outpaint.desktop
+
+Summary
+
+This repo provides:
+
+Fully automated A1111 ARM64 installer
+
+CPU-only support
+
+Unified launcher with offline mode
+
+API-ready environment
+
+Outpaint Helper GUI
+
+Automatic model installs
+
+Full uninstall options
