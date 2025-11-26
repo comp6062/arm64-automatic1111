@@ -1,75 +1,42 @@
 #!/bin/bash
 
+# Define color variables for pretty output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m'
+NC='\033[0m' # No color
 
+# Function to show progress with red color
 progress_bar() {
-    local msg="$1"
-    echo -ne "${YELLOW}${msg}...${NC}\r"
+    echo -e "${RED}$1${NC}"
+    sleep 1
 }
 
-USER_HOME=$(eval echo ~$SUDO_USER)
-if [ -z "$USER_HOME" ]; then
-    USER_HOME=$(eval echo ~$USER)
-fi
+# Update and upgrade system
+progress_bar "Updating and upgrading system..."
+sudo apt update && sudo apt upgrade -y
 
-if [ "$EUID" -ne 0 ]; then
-    echo -e "${RED}Please run this script with sudo:${NC}"
-    echo "  sudo bash setup_sd.sh"
-    exit 1
-fi
+# Install necessary dependencies
+progress_bar "Installing necessary dependencies..."
+sudo apt install -y python3 python3-pip python3-venv git libgl1 libglib2.0-0 wget
 
-echo -e "${GREEN}Starting Stable Diffusion WebUI setup...${NC}"
+# Dynamically determine the user's home directory
+USER_HOME=$(eval echo ~$USER)
 
-# Update system packages
-progress_bar "Updating system packages"
-apt update && apt upgrade -y > /dev/null 2>&1
-echo -e "${GREEN}System packages updated.${NC}"
+# Create and activate a virtual environment inside the user's home directory
+progress_bar "Setting up virtual environment..."
+python3 -m venv "$USER_HOME/stable-diffusion-env"
+source "$USER_HOME/stable-diffusion-env/bin/activate"
 
-# Install dependencies
-progress_bar "Installing dependencies"
-apt install -y python3 python3-venv python3-pip git wget curl libffi-dev libssl-dev libjpeg-dev zlib1g-dev > /dev/null 2>&1
-echo -e "${GREEN}Dependencies installed.${NC}"
+# Clone the Stable Diffusion WebUI repository
+progress_bar "Cloning Stable Diffusion WebUI repository..."
+git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git "$USER_HOME/stable-diffusion-webui"
+cd "$USER_HOME/stable-diffusion-webui"
 
-# Create a dedicated environment folder
-VENV_DIR="$USER_HOME/stable-diffusion-env"
-if [ ! -d "$VENV_DIR" ]; then
-    progress_bar "Creating Python virtual environment"
-    sudo -u "$SUDO_USER" python3 -m venv "$VENV_DIR"
-    echo -e "${GREEN}Virtual environment created at $VENV_DIR.${NC}"
-else
-    echo -e "${YELLOW}Virtual environment already exists at $VENV_DIR. Skipping creation.${NC}"
-fi
-
-# Activate the environment and install PyTorch CPU and other requirements
-progress_bar "Installing PyTorch (CPU) and web UI requirements"
-sudo -u "$SUDO_USER" bash -c "
-source \"$VENV_DIR/bin/activate\" && \
-pip install --upgrade pip > /dev/null 2>&1 && \
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu > /dev/null 2>&1
-"
-echo -e "${GREEN}PyTorch CPU installed.${NC}"
-
-# Clone Stable Diffusion WebUI
-WEBUI_DIR="$USER_HOME/stable-diffusion-webui"
-if [ ! -d "$WEBUI_DIR" ]; then
-    progress_bar "Cloning Stable Diffusion WebUI repository"
-    sudo -u "$SUDO_USER" git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git "$WEBUI_DIR" > /dev/null 2>&1
-    echo -e "${GREEN}Stable Diffusion WebUI cloned to $WEBUI_DIR.${NC}"
-else
-    echo -e "${YELLOW}Stable Diffusion WebUI already exists at $WEBUI_DIR. Skipping clone.${NC}"
-fi
-
-# Install WebUI requirements
-progress_bar "Installing WebUI Python requirements"
-sudo -u "$SUDO_USER" bash -c "
-source \"$VENV_DIR/bin/activate\" && \
-cd \"$WEBUI_DIR\" && \
-pip install -r requirements.txt > /dev/null 2>&1
-"
-echo -e "${GREEN}WebUI requirements installed.${NC}"
+# Install PyTorch and requirements
+progress_bar "Installing PyTorch and other dependencies..."
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+pip install -r requirements.txt
 
 # Download the model files
 progress_bar "Downloading the model files..."
@@ -125,9 +92,9 @@ case "$choice" in
         echo -e "${GREEN}Running with internet connection (LAN access) and API enabled...${NC}"
         source "$VENV_DIR/bin/activate"
         cd "$WEBUI_DIR"
-        DEFAULT_LOCAL_IP=\$(hostname -I | awk '{print \$1}')
-        echo -e "Access it at: http://\$DEFAULT_LOCAL_IP:7860"
-        echo -e "API endpoint:  http://\$DEFAULT_LOCAL_IP:7860/sdapi/v1/..."
+        DEFAULT_LOCAL_IP=$(hostname -I | awk '{print $1}')
+        echo -e "Access it at: http://$DEFAULT_LOCAL_IP:7860"
+        echo -e "API endpoint:  http://$DEFAULT_LOCAL_IP:7860/sdapi/v1/..."
         python launch.py --skip-torch-cuda-test --no-half --listen --api
         cleanup
         ;;
@@ -162,31 +129,32 @@ progress_bar "Creating remove.sh script..."
 cat <<'EOF' > "$USER_HOME/remove.sh"
 #!/bin/bash
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
-
 USER_HOME=$(eval echo ~$USER)
-WEBUI_DIR="$USER_HOME/stable-diffusion-webui"
-VENV_DIR="$USER_HOME/stable-diffusion-env"
 
-echo -e "${YELLOW}This will remove Stable Diffusion WebUI and its environment from:${NC}"
-echo "  $WEBUI_DIR"
-echo "  $VENV_DIR"
-read -p "Are you sure? [y/N]: " confirm
-
-if [[ "$confirm" =~ ^[Yy]$ ]]; then
-    echo -e "${RED}Removing Stable Diffusion WebUI...${NC}"
-    rm -rf "$WEBUI_DIR"
-    echo -e "${RED}Removing virtual environment...${NC}"
-    rm -rf "$VENV_DIR"
-    echo -e "${GREEN}Uninstallation complete.${NC}"
-else
-    echo -e "${YELLOW}Uninstallation cancelled.${NC}"
+if [ -f "$USER_HOME/run_sd.sh" ]; then
+    echo "Removing $USER_HOME/run_sd.sh..."
+    rm "$USER_HOME/run_sd.sh"
 fi
+
+if [ -d "$USER_HOME/stable-diffusion-webui" ]; then
+    echo "Removing $USER_HOME/stable-diffusion-webui..."
+    rm -rf "$USER_HOME/stable-diffusion-webui"
+fi
+
+if [ -d "$USER_HOME/stable-diffusion-env" ]; then
+    echo "Removing $USER_HOME/stable-diffusion-env..."
+    rm -rf "$USER_HOME/stable-diffusion-env"
+fi
+
+if [ -f "$USER_HOME/remove.sh" ]; then
+    echo "Removing $USER_HOME/remove.sh..."
+    rm "$USER_HOME/remove.sh"
+fi
+
+echo "Cleanup complete."
 EOF
 
 chmod +x "$USER_HOME/remove.sh"
 
+# Final message
 echo -e "${GREEN}Setup complete.${NC} Use ~/run_sd.sh to start Stable Diffusion or ~/remove.sh to uninstall."
