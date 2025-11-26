@@ -199,7 +199,8 @@ class OutpaintApp:
         try:
             img = Image.open(path).convert("RGBA")
         except Exception as e:
-            messagebox.showerror("Error", f"Could not open image:\n{e}")
+            messagebox.showerror("Error", f"Could not open image:
+{e}")
             return
 
         self.image_path = path

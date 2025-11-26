@@ -79,38 +79,48 @@ if [ ! -d "$WEBUI_DIR" ]; then
 fi
 
 echo -e "${YELLOW}Select an option:${NC}"
-echo "1) Run connected to the internet (http://Local_IP:7860)"
-echo "2) Run completely offline (127.0.0.1:7860)"
+echo "1) Run connected to the internet (http://Local_IP:7860, API ON)"
+echo "2) Run completely offline (127.0.0.1:7860, API ON)"
 echo "3) Uninstall"
 echo "4) Quit"
 read -p "Enter your choice: " choice
 
 case "$choice" in
     1)
-        echo -e "${GREEN}Running with internet connection (LAN access)...${NC}"
+        echo -e "${GREEN}Running with internet connection (LAN access) and API enabled...${NC}"
         source "$VENV_DIR/bin/activate"
         cd "$WEBUI_DIR"
-        DEFAULT_LOCAL_IP=$(hostname -I | awk '{print $1}')
-        echo -e "Access it at: http://$DEFAULT_LOCAL_IP:7860"
-        python launch.py --skip-torch-cuda-test --no-half --listen
-        cleanup
+
+        # Get the first non-loopback IP address
+        LAN_IP=$(hostname -I | awk '{print $1}')
+
+        echo "Access it at: http://$LAN_IP:7860"
+        echo "API endpoint:  http://$LAN_IP:7860/sdapi/v1/..."
+
+        python launch.py --skip-torch-cuda-test --no-half --listen --api
         ;;
+
     2)
-        echo -e "${GREEN}Running completely offline (localhost only)...${NC}"
+        echo -e "${GREEN}Running completely offline (localhost only) with API enabled...${NC}"
         source "$VENV_DIR/bin/activate"
         cd "$WEBUI_DIR"
-        echo -e "Access it at: http://127.0.0.1:7860"
-        python launch.py --skip-torch-cuda-test --no-half --skip-install
-        cleanup
+
+        echo "Access it at: http://127.0.0.1:7860"
+        echo "API endpoint:  http://127.0.0.1:7860/sdapi/v1/..."
+
+        python launch.py --skip-torch-cuda-test --no-half --api
         ;;
+
     3)
         echo -e "${RED}Uninstalling...${NC}"
         bash "$USER_HOME/remove.sh"
         ;;
+
     4)
         echo -e "${YELLOW}Quitting.${NC}"
         exit 0
         ;;
+
     *)
         echo -e "${RED}Invalid option. Exiting.${NC}"
         exit 1
@@ -180,7 +190,7 @@ fi
 sudo rm -rf "${APP_DIR}"
 sudo mkdir -p "${APP_DIR}"
 
-# Download the helper Python app from this GitHub repo
+# Fetch the helper Python app from this GitHub repo
 sudo curl -sSL "https://raw.githubusercontent.com/comp6062/arm64-automatic1111/main/sd_outpaint_gui.py" -o "${PY_APP}"
 sudo chmod 644 "${PY_APP}"
 sudo chown root:root "${PY_APP}"
