@@ -8,8 +8,10 @@ from tkinter.scrolledtext import ScrolledText
 import requests
 from PIL import Image, ImageDraw
 
+# Stable Diffusion API endpoint
 SD_API_URL = "http://127.0.0.1:7860"
 
+# The inpainting model we want to force
 INPAINT_MODEL_NAME = "Realistic_Vision_V5.1-inpainting"
 INPAINT_FILENAME_END = "/Realistic_Vision_V5.1-inpainting.safetensors"
 
@@ -51,6 +53,7 @@ class OutpaintApp:
         main.rowconfigure(3, weight=1)
         main.rowconfigure(5, weight=0)
 
+        # === Base image section ===
         file_frame = ttk.LabelFrame(main, text="Base Image")
         file_frame.grid(row=0, column=0, sticky="ew", pady=(0, 8))
         file_frame.columnconfigure(1, weight=1)
@@ -69,12 +72,13 @@ class OutpaintApp:
             row=1, column=1, sticky="e"
         )
 
+        # === Padding section ===
         pad_frame = ttk.LabelFrame(main, text="Padding (pixels to outpaint on each side)")
         pad_frame.grid(row=1, column=0, sticky="ew", pady=(0, 8))
         for i in range(3):
             pad_frame.columnconfigure(i, weight=1)
 
-        # DEFAULTS SET TO 0  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        # Default padding values: 0 on all sides
         self.pad_top = tk.IntVar(value=0)
         self.pad_bottom = tk.IntVar(value=0)
         self.pad_left = tk.IntVar(value=0)
@@ -100,6 +104,7 @@ class OutpaintApp:
             row=5, column=1
         )
 
+        # === SD params ===
         params_frame = ttk.LabelFrame(main, text="Stable Diffusion Parameters")
         params_frame.grid(row=2, column=0, sticky="ew", pady=(0, 8))
         for i in range(4):
@@ -144,6 +149,7 @@ class OutpaintApp:
             width=6,
         ).grid(row=1, column=3, sticky="w")
 
+        # === Prompts ===
         prompt_frame = ttk.LabelFrame(main, text="Prompts")
         prompt_frame.grid(row=3, column=0, sticky="nsew", pady=(0, 8))
         prompt_frame.columnconfigure(0, weight=1)
@@ -166,6 +172,7 @@ class OutpaintApp:
             "lowres, blurry, distorted, deformed, bad anatomy, artifacts, watermark, text",
         )
 
+        # === Buttons ===
         btn_frame = ttk.Frame(main)
         btn_frame.grid(row=4, column=0, sticky="ew", pady=(0, 4))
         btn_frame.columnconfigure(0, weight=1)
@@ -179,6 +186,7 @@ class OutpaintApp:
         quit_btn = ttk.Button(btn_frame, text="Quit", command=root.quit)
         quit_btn.grid(row=0, column=1, sticky="ew", padx=(4, 0))
 
+        # === Status ===
         status_frame = ttk.Frame(main)
         status_frame.grid(row=5, column=0, sticky="ew")
         status_frame.columnconfigure(0, weight=1)
@@ -191,10 +199,11 @@ class OutpaintApp:
         )
 
     def load_image(self):
+        # Fix: proper image filter for Tk (space-separated patterns)
         path = filedialog.askopenfilename(
             title="Select base image",
             filetypes=[
-                ("Image files", "*.png;*.jpg;*.jpeg;*.webp;*.bmp"),
+                ("Image files", "*.png *.jpg *.jpeg *.webp *.bmp *.PNG *.JPG *.JPEG *.WEBP *.BMP"),
                 ("All files", "*.*"),
             ],
         )
@@ -214,6 +223,10 @@ class OutpaintApp:
         self.status_var.set("Image loaded successfully.")
 
     def force_inpaint_model(self):
+        """
+        Force Stable Diffusion to use the Realistic_Vision_V5.1-inpainting model
+        by calling /sdapi/v1/sd-models and then /sdapi/v1/options.
+        """
         try:
             resp = requests.get(f"{SD_API_URL}/sdapi/v1/sd-models", timeout=30)
             resp.raise_for_status()
@@ -242,7 +255,8 @@ class OutpaintApp:
                 "Inpainting model not found",
                 f"Could not find inpainting model:\n\n"
                 f"  {INPAINT_MODEL_NAME}\n\n"
-                "Please install it in the Stable Diffusion models folder.",
+                "Make sure it is installed in your A1111 models folder.\n"
+                "Outpainting will continue with the current model.",
             )
             return
 
@@ -255,7 +269,9 @@ class OutpaintApp:
         except Exception as e:
             messagebox.showwarning(
                 "Failed to switch model",
-                f"Tried to switch to inpainting model:\n{target_title}\n\nError:\n{e}",
+                f"Tried to switch to inpainting model:\n{target_title}\n\n"
+                f"Error:\n{e}\n\n"
+                "Outpainting will continue with the current model.",
             )
             return
 
@@ -267,8 +283,9 @@ class OutpaintApp:
             messagebox.showwarning("No Image", "Please load a base image first.")
             return
 
+        # First time: force the inpainting model
         if not self.inpaint_model_forced:
-            self.status_var.set("Setting inpainting model…")
+            self.status_var.set("Setting Stable Diffusion model to inpainting model…")
             self.root.update_idletasks()
             self.force_inpaint_model()
 
@@ -280,6 +297,15 @@ class OutpaintApp:
         except Exception:
             messagebox.showerror("Invalid input", "Padding values must be integers.")
             return
+
+        if pad_top == pad_bottom == pad_left == pad_right == 0:
+            if not messagebox.askyesno(
+                "No padding",
+                "All paddings are set to 0.\n"
+                "This will not add any outpaint area.\n\n"
+                "Continue anyway?",
+            ):
+                return
 
         base_img = self.image
         orig_w, orig_h = base_img.size
@@ -297,29 +323,57 @@ class OutpaintApp:
             fill=0,
         )
 
+        prompt = self.prompt_text.get("1.0", "end").strip()
+        neg_prompt = self.neg_prompt_text.get("1.0", "end").strip()
+        sampler = self.sampler_var.get()
+
+        try:
+            steps = int(self.steps_var.get())
+        except Exception:
+            steps = 25
+        try:
+            cfg = float(self.cfg_var.get())
+        except Exception:
+            cfg = 7.0
+        try:
+            denoise = float(self.denoise_var.get())
+        except Exception:
+            denoise = 0.55
+
+        init_b64 = pil_to_base64_png(expanded)
+        mask_b64 = pil_to_base64_png(mask)
+
         payload = {
-            "init_images": [pil_to_base64_png(expanded)],
-            "mask": pil_to_base64_png(mask),
-            "prompt": self.prompt_text.get("1.0", "end").strip(),
-            "negative_prompt": self.neg_prompt_text.get("1.0", "end").strip(),
-            "sampler_name": self.sampler_var.get(),
-            "steps": int(self.steps_var.get()),
-            "cfg_scale": float(self.cfg_var.get()),
-            "denoising_strength": float(self.denoise_var.get()),
+            "init_images": [init_b64],
+            "mask": mask_b64,
+            "prompt": prompt,
+            "negative_prompt": neg_prompt,
+            "sampler_name": sampler,
+            "steps": steps,
+            "cfg_scale": cfg,
+            "denoising_strength": denoise,
             "width": new_w,
             "height": new_h,
-            "inpaint_full_res": False,
+            "batch_size": 1,
+            "n_iter": 1,
             "mask_blur": 8,
             "inpainting_fill": 1,
+            "inpaint_full_res": False,
+            "inpaint_full_res_padding": 0,
+            "inpainting_mask_invert": 0,
+            "resize_mode": 0,
         }
 
         self.generate_btn.config(state="disabled")
-        self.status_var.set("Generating (this may take a while)…")
+        self.status_var.set("Contacting Stable Diffusion and generating…")
         self.root.update_idletasks()
 
         try:
-            # NO TIMEOUT — prevents disconnect mid-run
-            resp = requests.post(f"{SD_API_URL}/sdapi/v1/img2img", json=payload)
+            # No timeout here: let SD finish, even on slow hardware / big images
+            resp = requests.post(
+                f"{SD_API_URL}/sdapi/v1/img2img",
+                json=payload,
+            )
             resp.raise_for_status()
             data = resp.json()
             images = data.get("images", [])
@@ -330,25 +384,33 @@ class OutpaintApp:
         except Exception as e:
             self.generate_btn.config(state="normal")
             self.status_var.set("Error during generation.")
-            messagebox.showerror("Error", f"Generation failed:\n{e}")
+            messagebox.showerror(
+                "Error",
+                f"Error while contacting Stable Diffusion or generating image:\n\n{e}",
+            )
             return
 
         self.generate_btn.config(state="normal")
-        self.status_var.set("Outpaint complete — choose where to save it.")
+        self.status_var.set("Outpainted image ready. Choose where to save it.")
 
         save_path = filedialog.asksaveasfilename(
             title="Save outpainted image",
             defaultextension=".png",
-            filetypes=[("PNG", "*.png"), ("All files", "*.*")],
+            filetypes=[("PNG image", "*.png"), ("All files", "*.*")],
         )
-
         if save_path:
             try:
                 out_img.save(save_path)
-                self.status_var.set(f"Saved: {save_path}")
-                messagebox.showinfo("Saved", f"Outpainted image saved:\n{save_path}")
+                self.status_var.set(f"Saved outpainted image to: {save_path}")
+                messagebox.showinfo(
+                    "Saved",
+                    f"Outpainted image saved to:\n{save_path}",
+                )
             except Exception as e:
+                self.status_var.set("Failed to save image.")
                 messagebox.showerror("Error", f"Could not save image:\n{e}")
+        else:
+            self.status_var.set("Save canceled. You can generate again or save later.")
 
 
 def main():
