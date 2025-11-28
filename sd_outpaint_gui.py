@@ -74,10 +74,11 @@ class OutpaintApp:
         for i in range(3):
             pad_frame.columnconfigure(i, weight=1)
 
-        self.pad_top = tk.IntVar(value=256)
-        self.pad_bottom = tk.IntVar(value=256)
-        self.pad_left = tk.IntVar(value=256)
-        self.pad_right = tk.IntVar(value=256)
+        # DEFAULTS SET TO 0  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        self.pad_top = tk.IntVar(value=0)
+        self.pad_bottom = tk.IntVar(value=0)
+        self.pad_left = tk.IntVar(value=0)
+        self.pad_right = tk.IntVar(value=0)
 
         ttk.Label(pad_frame, text="Top").grid(row=0, column=1)
         ttk.Spinbox(pad_frame, from_=0, to=4096, textvariable=self.pad_top, width=7).grid(
@@ -241,8 +242,7 @@ class OutpaintApp:
                 "Inpainting model not found",
                 f"Could not find inpainting model:\n\n"
                 f"  {INPAINT_MODEL_NAME}\n\n"
-                "Make sure it is installed in your A1111 models folder.\n"
-                "Outpainting will continue with the current model.",
+                "Please install it in the Stable Diffusion models folder.",
             )
             return
 
@@ -255,9 +255,7 @@ class OutpaintApp:
         except Exception as e:
             messagebox.showwarning(
                 "Failed to switch model",
-                f"Tried to switch to inpainting model:\n{target_title}\n\n"
-                f"Error:\n{e}\n\n"
-                "Outpainting will continue with the current model.",
+                f"Tried to switch to inpainting model:\n{target_title}\n\nError:\n{e}",
             )
             return
 
@@ -270,7 +268,7 @@ class OutpaintApp:
             return
 
         if not self.inpaint_model_forced:
-            self.status_var.set("Setting Stable Diffusion model to inpainting model…")
+            self.status_var.set("Setting inpainting model…")
             self.root.update_idletasks()
             self.force_inpaint_model()
 
@@ -282,15 +280,6 @@ class OutpaintApp:
         except Exception:
             messagebox.showerror("Invalid input", "Padding values must be integers.")
             return
-
-        if pad_top == pad_bottom == pad_left == pad_right == 0:
-            if not messagebox.askyesno(
-                "No padding",
-                "All paddings are set to 0.\n"
-                "This will not add any outpaint area.\n\n"
-                "Continue anyway?",
-            ):
-                return
 
         base_img = self.image
         orig_w, orig_h = base_img.size
@@ -308,56 +297,29 @@ class OutpaintApp:
             fill=0,
         )
 
-        prompt = self.prompt_text.get("1.0", "end").strip()
-        neg_prompt = self.neg_prompt_text.get("1.0", "end").strip()
-        sampler = self.sampler_var.get()
-
-        try:
-            steps = int(self.steps_var.get())
-        except Exception:
-            steps = 25
-        try:
-            cfg = float(self.cfg_var.get())
-        except Exception:
-            cfg = 7.0
-        try:
-            denoise = float(self.denoise_var.get())
-        except Exception:
-            denoise = 0.55
-
-        init_b64 = pil_to_base64_png(expanded)
-        mask_b64 = pil_to_base64_png(mask)
-
         payload = {
-            "init_images": [init_b64],
-            "mask": mask_b64,
-            "prompt": prompt,
-            "negative_prompt": neg_prompt,
-            "sampler_name": sampler,
-            "steps": steps,
-            "cfg_scale": cfg,
-            "denoising_strength": denoise,
+            "init_images": [pil_to_base64_png(expanded)],
+            "mask": pil_to_base64_png(mask),
+            "prompt": self.prompt_text.get("1.0", "end").strip(),
+            "negative_prompt": self.neg_prompt_text.get("1.0", "end").strip(),
+            "sampler_name": self.sampler_var.get(),
+            "steps": int(self.steps_var.get()),
+            "cfg_scale": float(self.cfg_var.get()),
+            "denoising_strength": float(self.denoise_var.get()),
             "width": new_w,
             "height": new_h,
-            "batch_size": 1,
-            "n_iter": 1,
+            "inpaint_full_res": False,
             "mask_blur": 8,
             "inpainting_fill": 1,
-            "inpaint_full_res": False,
-            "inpaint_full_res_padding": 0,
-            "inpainting_mask_invert": 0,
-            "resize_mode": 0,
         }
 
         self.generate_btn.config(state="disabled")
-        self.status_var.set("Contacting Stable Diffusion and generating…")
+        self.status_var.set("Generating (this may take a while)…")
         self.root.update_idletasks()
 
         try:
-            resp = requests.post(
-                f"{SD_API_URL}/sdapi/v1/img2img",
-                json=payload,
-            )
+            # NO TIMEOUT — prevents disconnect mid-run
+            resp = requests.post(f"{SD_API_URL}/sdapi/v1/img2img", json=payload)
             resp.raise_for_status()
             data = resp.json()
             images = data.get("images", [])
@@ -368,33 +330,25 @@ class OutpaintApp:
         except Exception as e:
             self.generate_btn.config(state="normal")
             self.status_var.set("Error during generation.")
-            messagebox.showerror(
-                "Error",
-                f"Error while contacting Stable Diffusion or generating image:\n\n{e}",
-            )
+            messagebox.showerror("Error", f"Generation failed:\n{e}")
             return
 
         self.generate_btn.config(state="normal")
-        self.status_var.set("Outpainted image ready. Choose where to save it.")
+        self.status_var.set("Outpaint complete — choose where to save it.")
 
         save_path = filedialog.asksaveasfilename(
             title="Save outpainted image",
             defaultextension=".png",
             filetypes=[("PNG", "*.png"), ("All files", "*.*")],
         )
+
         if save_path:
             try:
                 out_img.save(save_path)
-                self.status_var.set(f"Saved outpainted image to: {save_path}")
-                messagebox.showinfo(
-                    "Saved",
-                    f"Outpainted image saved to:\n{save_path}",
-                )
+                self.status_var.set(f"Saved: {save_path}")
+                messagebox.showinfo("Saved", f"Outpainted image saved:\n{save_path}")
             except Exception as e:
-                self.status_var.set("Failed to save image.")
                 messagebox.showerror("Error", f"Could not save image:\n{e}")
-        else:
-            self.status_var.set("Save canceled. You can generate again or save later.")
 
 
 def main():
@@ -404,9 +358,6 @@ def main():
         if "clam" in style.theme_names():
             style.theme_use("clam")
     except Exception:
-        pass
-
-        # even if theme set fails, continue
         pass
 
     app = OutpaintApp(root)
