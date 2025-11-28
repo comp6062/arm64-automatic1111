@@ -78,7 +78,7 @@ class OutpaintApp:
         for i in range(3):
             pad_frame.columnconfigure(i, weight=1)
 
-        # Default padding values: 0 on all sides
+        # Default padding: 0 all around
         self.pad_top = tk.IntVar(value=0)
         self.pad_bottom = tk.IntVar(value=0)
         self.pad_left = tk.IntVar(value=0)
@@ -199,11 +199,14 @@ class OutpaintApp:
         )
 
     def load_image(self):
-        # Fix: proper image filter for Tk (space-separated patterns)
+        # Proper image filter for Tk (space-separated patterns)
         path = filedialog.askopenfilename(
             title="Select base image",
             filetypes=[
-                ("Image files", "*.png *.jpg *.jpeg *.webp *.bmp *.PNG *.JPG *.JPEG *.WEBP *.BMP"),
+                (
+                    "Image files",
+                    "*.png *.jpg *.jpeg *.webp *.bmp *.PNG *.JPG *.JPEG *.WEBP *.BMP",
+                ),
                 ("All files", "*.*"),
             ],
         )
@@ -260,10 +263,12 @@ class OutpaintApp:
             )
             return
 
+        # Remove timeout from the model-switch call so it won't give up early
         try:
             opt_payload = {"sd_model_checkpoint": target_title}
             resp = requests.post(
-                f"{SD_API_URL}/sdapi/v1/options", json=opt_payload, timeout=60
+                f"{SD_API_URL}/sdapi/v1/options",
+                json=opt_payload,
             )
             resp.raise_for_status()
         except Exception as e:
@@ -369,7 +374,7 @@ class OutpaintApp:
         self.root.update_idletasks()
 
         try:
-            # No timeout here: let SD finish, even on slow hardware / big images
+            # No timeout here either: let SD finish as long as it needs
             resp = requests.post(
                 f"{SD_API_URL}/sdapi/v1/img2img",
                 json=payload,
