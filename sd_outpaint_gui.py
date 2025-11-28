@@ -8,10 +8,8 @@ from tkinter.scrolledtext import ScrolledText
 import requests
 from PIL import Image, ImageDraw
 
-# Stable Diffusion API endpoint
 SD_API_URL = "http://127.0.0.1:7860"
 
-# The inpainting model we want to force
 INPAINT_MODEL_NAME = "Realistic_Vision_V5.1-inpainting"
 INPAINT_FILENAME_END = "/Realistic_Vision_V5.1-inpainting.safetensors"
 
@@ -35,8 +33,6 @@ class OutpaintApp:
 
         self.image_path = None
         self.image = None
-
-        # Track whether we've already successfully forced the inpaint model
         self.inpaint_model_forced = False
 
         self._build_ui()
@@ -55,7 +51,6 @@ class OutpaintApp:
         main.rowconfigure(3, weight=1)
         main.rowconfigure(5, weight=0)
 
-        # === File / base image ===
         file_frame = ttk.LabelFrame(main, text="Base Image")
         file_frame.grid(row=0, column=0, sticky="ew", pady=(0, 8))
         file_frame.columnconfigure(1, weight=1)
@@ -74,7 +69,6 @@ class OutpaintApp:
             row=1, column=1, sticky="e"
         )
 
-        # === Padding ===
         pad_frame = ttk.LabelFrame(main, text="Padding (pixels to outpaint on each side)")
         pad_frame.grid(row=1, column=0, sticky="ew", pady=(0, 8))
         for i in range(3):
@@ -105,7 +99,6 @@ class OutpaintApp:
             row=5, column=1
         )
 
-        # === SD params ===
         params_frame = ttk.LabelFrame(main, text="Stable Diffusion Parameters")
         params_frame.grid(row=2, column=0, sticky="ew", pady=(0, 8))
         for i in range(4):
@@ -150,7 +143,6 @@ class OutpaintApp:
             width=6,
         ).grid(row=1, column=3, sticky="w")
 
-        # === Prompts ===
         prompt_frame = ttk.LabelFrame(main, text="Prompts")
         prompt_frame.grid(row=3, column=0, sticky="nsew", pady=(0, 8))
         prompt_frame.columnconfigure(0, weight=1)
@@ -173,7 +165,6 @@ class OutpaintApp:
             "lowres, blurry, distorted, deformed, bad anatomy, artifacts, watermark, text",
         )
 
-        # === Buttons ===
         btn_frame = ttk.Frame(main)
         btn_frame.grid(row=4, column=0, sticky="ew", pady=(0, 4))
         btn_frame.columnconfigure(0, weight=1)
@@ -187,7 +178,6 @@ class OutpaintApp:
         quit_btn = ttk.Button(btn_frame, text="Quit", command=root.quit)
         quit_btn.grid(row=0, column=1, sticky="ew", padx=(4, 0))
 
-        # === Status ===
         status_frame = ttk.Frame(main)
         status_frame.grid(row=5, column=0, sticky="ew")
         status_frame.columnconfigure(0, weight=1)
@@ -222,12 +212,7 @@ class OutpaintApp:
         self.size_var.set(f"{img.width} x {img.height}")
         self.status_var.set("Image loaded successfully.")
 
-    # === NEW: force the inpainting model ===
     def force_inpaint_model(self):
-        """
-        Force Stable Diffusion to use the Realistic_Vision_V5.1-inpainting model
-        by calling /sdapi/v1/sd-models and then /sdapi/v1/options.
-        """
         try:
             resp = requests.get(f"{SD_API_URL}/sdapi/v1/sd-models", timeout=30)
             resp.raise_for_status()
@@ -261,7 +246,6 @@ class OutpaintApp:
             )
             return
 
-        # Now set sd_model_checkpoint via /sdapi/v1/options
         try:
             opt_payload = {"sd_model_checkpoint": target_title}
             resp = requests.post(
@@ -285,7 +269,6 @@ class OutpaintApp:
             messagebox.showwarning("No Image", "Please load a base image first.")
             return
 
-        # Make sure we have forced the correct inpaint model at least once
         if not self.inpaint_model_forced:
             self.status_var.set("Setting Stable Diffusion model to inpainting model…")
             self.root.update_idletasks()
@@ -374,7 +357,6 @@ class OutpaintApp:
             resp = requests.post(
                 f"{SD_API_URL}/sdapi/v1/img2img",
                 json=payload,
-                timeout=600,
             )
             resp.raise_for_status()
             data = resp.json()
@@ -422,6 +404,9 @@ def main():
         if "clam" in style.theme_names():
             style.theme_use("clam")
     except Exception:
+        pass
+
+        # even if theme set fails, continue
         pass
 
     app = OutpaintApp(root)
