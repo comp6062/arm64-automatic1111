@@ -18,8 +18,9 @@ a guided installer, unified launcher, and clean uninstall process.
 
 - [Overview](#overview)
 - [Supported Architectures](#supported-architectures)
-  - [ARM64 (aarch64) – Recommended](#arm64-aarch64--recommended)
-  - [ARM32 (armv7l) – Best Effort](#arm32-armv7l--best-effort)
+  - [ARM64 aarch64 recommended](#arm64-aarch64-recommended)
+  - [ARM32 armv7l best-effort](#arm32-armv7l-best-effort)
+- [Architecture Detection & Install Logic](#architecture-detection--install-logic)
 - [System Requirements](#system-requirements)
 - [Installation](#installation)
 - [Running Stable Diffusion](#running-stable-diffusion)
@@ -39,7 +40,7 @@ This setup installs and configures:
 - Python virtual environment
 - CPU-only PyTorch (no CUDA / no ROCm)
 - Unified launcher (`~/run_sd.sh`)
-- Clean uninstall script
+- Clean uninstall script (`~/remove.sh`)
 
 Designed for **Raspberry Pi OS**, **Debian**, and other ARM Linux distributions.
 
@@ -52,7 +53,7 @@ appropriate PyTorch build.
 
 ---
 
-### ARM64 (aarch64) – Recommended
+### ARM64 aarch64 recommended
 
 This is the **preferred and most reliable configuration**.
 
@@ -69,7 +70,7 @@ This is the **preferred and most reliable configuration**.
 
 ---
 
-### ARM32 (armv7l) – Best Effort
+### ARM32 armv7l best-effort
 
 ARM32 (32-bit Raspberry Pi OS) support is provided on a **best-effort basis**.
 
@@ -90,6 +91,41 @@ ARM32 (32-bit Raspberry Pi OS) support is provided on a **best-effort basis**.
 **If matching wheels are unavailable:**
 - Installation stops with a clear error
 - You are instructed to switch to a **64-bit OS**
+
+---
+
+## Architecture Detection & Install Logic
+
+This setup script performs **automatic architecture detection** and selects the
+best possible installation path for your system **without user input**.
+
+### Detection Process
+
+At runtime, the installer checks:
+
+```bash
+uname -m
+```
+
+Based on the result:
+
+| Detected value | Installation path |
+|---------------|-------------------|
+| `aarch64` | ARM64 (official PyTorch CPU wheels) |
+| `armv7l`, `armv7*` | ARM32 (prebuilt community wheels) |
+| Other | Installation stops (unsupported) |
+
+### Installation Behavior
+
+- **ARM64 systems**
+  - Use the official PyTorch CPU wheel index
+  - Fully supported and recommended
+- **ARM32 systems**
+  - Attempt installation using matching prebuilt wheels
+  - If compatible wheels are not available, the installer **fails cleanly**
+  - No source builds or partial installs are attempted
+
+This ensures the system is **never left in a broken or undefined state**.
 
 ---
 
@@ -126,7 +162,7 @@ Or using `wget`:
 wget -qO- https://raw.githubusercontent.com/comp6062/rpi-automatic1111/main/setup_sd.sh | bash
 ```
 
-### The installer will:
+### The installer will
 
 - Install system dependencies
 - Create a Python virtual environment
@@ -208,4 +244,5 @@ This removes:
 | ARM64 (aarch64) | Fully supported (recommended) |
 | ARM32 (armv7l) | Best effort only |
 
-If installation fails on ARM32, switch to a **64-bit OS**.
+If installation fails on ARM32, switch to a **64-bit OS**.  
+That is the intended and supported upgrade path.
