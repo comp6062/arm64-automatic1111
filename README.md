@@ -14,7 +14,7 @@ a guided setup, run script, and clean uninstall process.
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 
 - [Overview](#overview)
 - [Supported Architectures](#supported-architectures)
@@ -31,7 +31,7 @@ a guided setup, run script, and clean uninstall process.
 
 ---
 
-## 🧠 Overview
+## Overview
 
 This setup installs and configures:
 
@@ -45,14 +45,14 @@ It is designed for **Raspberry Pi OS**, **Debian**, and other ARM Linux distribu
 
 ---
 
-## 🧩 Supported Architectures
+## Supported Architectures
 
 The setup script **automatically detects your system architecture** and installs
 the correct dependencies.
 
 ---
 
-### ✅ ARM64 (aarch64) — Recommended
+### ARM64 (aarch64) – Recommended
 
 This is the **most reliable setup**.
 
@@ -67,11 +67,11 @@ This is the **most reliable setup**.
 - Best compatibility with AUTOMATIC1111
 - Works reliably on Raspberry Pi 4 / 5 (64-bit OS)
 
-✅ **If you have the choice, use a 64-bit OS.**
+**If you have the choice, use a 64-bit OS.**
 
 ---
 
-### ⚠️ ARM32 (armv7l) — Best Effort
+### ARM32 (armv7l) – Best Effort
 
 ARM32 (32-bit Raspberry Pi OS) is supported on a **best-effort basis**.
 
@@ -80,7 +80,7 @@ ARM32 (32-bit Raspberry Pi OS) is supported on a **best-effort basis**.
   - `torch`
   - `torchvision`
   - (and `numpy` when available)
-- Wheels are sourced from:
+- Wheels are sourced from:  
   **PINTO0309 / pytorch4raspberrypi**
 - The script dynamically matches:
   - CPU architecture (`armv7l`)
@@ -95,11 +95,11 @@ ARM32 (32-bit Raspberry Pi OS) is supported on a **best-effort basis**.
 - The installer will **stop with a clear error**
 - You should switch to a **64-bit OS** (recommended path)
 
-> ⚠️ **ARM32 is not recommended for long-term or production use.**
+**ARM32 is not recommended for long-term or production use.**
 
 ---
 
-## 🧰 System Requirements
+## System Requirements
 
 ### Minimum
 - Raspberry Pi 4 / 5 (or other ARM SBC)
@@ -116,7 +116,7 @@ ARM32 (32-bit Raspberry Pi OS) is supported on a **best-effort basis**.
 
 ---
 
-## 🚀 Installation
+## Installation
 
 Clone this repository and run the setup script:
 
@@ -136,7 +136,7 @@ The script will:
 
 ---
 
-## ▶️ Running Stable Diffusion
+## Running Stable Diffusion
 
 After installation, start the WebUI with:
 
@@ -146,14 +146,14 @@ After installation, start the WebUI with:
 
 You will be prompted to choose:
 
-1. **LAN Mode** – accessible from other devices on your network  
-2. **Offline Mode** – localhost only  
-3. **Uninstall**  
-4. **Quit**
+1. LAN Mode – accessible from other devices on your network  
+2. Offline Mode – localhost only  
+3. Uninstall  
+4. Quit  
 
 ---
 
-## 🔌 Offline Mode
+## Offline Mode
 
 Offline mode runs Stable Diffusion **without internet access**:
 
@@ -167,7 +167,7 @@ http://127.0.0.1:7860
 
 ---
 
-## 🧹 Uninstalling
+## Uninstalling
 
 To completely remove everything:
 
@@ -182,30 +182,30 @@ This removes:
 
 ---
 
-## ⚠️ Known Limitations
+## Known Limitations
 
-- **CPU-only inference** (no GPU acceleration)
+- CPU-only inference (no GPU acceleration)
 - ARM32 is slower and less stable
 - Large models may exceed memory on 4 GB systems
 - First generation can take several minutes on Pi hardware
 
 ---
 
-## 🙏 Credits
+## Credits
 
-- AUTOMATIC1111 – Stable Diffusion WebUI
-- PyTorch Team – CPU wheel support
-- PINTO0309 – Raspberry Pi PyTorch ARM32 wheels
-- Raspberry Pi community contributors
+- AUTOMATIC1111 – Stable Diffusion WebUI  
+- PyTorch Team – CPU wheel support  
+- PINTO0309 – Raspberry Pi PyTorch ARM32 wheels  
+- Raspberry Pi community contributors  
 
 ---
 
-## ⭐ Recommendation Summary
+## Recommendation Summary
 
 | Architecture | Status |
 |-------------|--------|
-| ARM64 (aarch64) | ✅ Fully supported (recommended) |
-| ARM32 (armv7l) | ⚠️ Best effort only |
+| ARM64 (aarch64) | Fully supported (recommended) |
+| ARM32 (armv7l) | Best effort only |
 
-**If something fails on ARM32, switch to a 64-bit OS.**  
+If something fails on ARM32, switch to a 64-bit OS.  
 That is the intended and supported upgrade path.
