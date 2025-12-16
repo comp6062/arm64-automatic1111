@@ -1,191 +1,211 @@
-# ⭐ Stable Diffusion AUTOMATIC1111 (ARM64) — Full Installer
-### CPU-Only • ARM64 • Raspberry Pi Ready • Fully Automated
+# Stable Diffusion WebUI – Raspberry Pi (ARM)
 
-![Platform](https://img.shields.io/badge/Platform-ARM64-blue)
-![Pi](https://img.shields.io/badge/Raspberry%20Pi-4%20%7C%205-red)
-![CPU-Only](https://img.shields.io/badge/Backend-CPU--Only-green)
-![A1111](https://img.shields.io/badge/WebUI-AUTOMATIC1111-orange)
-![Installer](https://img.shields.io/badge/Installer-Fully%20Automated-success)
-![License](https://img.shields.io/badge/License-MIT-lightgrey)
+![Platform](https://img.shields.io/badge/platform-Raspberry%20Pi%20%2F%20ARM-blue)
+![CPU](https://img.shields.io/badge/acceleration-CPU--only-orange)
+![ARM64](https://img.shields.io/badge/ARM64-aarch64-success)
+![ARM32](https://img.shields.io/badge/ARM32-armv7l-yellow)
+![License](https://img.shields.io/badge/license-MIT-informational)
 
-A **completely automated ARM64 installer** for **AUTOMATIC1111 Stable Diffusion WebUI (CPU-only)** with clean online/offline launch modes, automatic model downloads, and full uninstall support.
+This repository provides a **fully automated setup** for running  
+**AUTOMATIC1111 Stable Diffusion WebUI** on Raspberry Pi and other ARM-based Linux systems.
 
-Designed for:
-
-- Raspberry Pi 4 / 5  
-- ARM64 SBCs  
-- CPU-only environments  
-- Users who want a simple, repeatable, zero-input Stable Diffusion setup  
+It supports **CPU-only inference**, is optimized for ARM environments, and includes
+a guided installer, unified launcher, and clean uninstall process.
 
 ---
 
-## 📚 Table of Contents
+## Table of Contents
 
-1. [Overview](#overview)  
-2. [Features](#features)  
-   - [Fully Automated Installation](#fully-automated-installation)  
-   - [Unified Launcher](#unified-launcher)  
-   - [Automatic Model Installation](#automatic-model-installation)  
-3. [Installation](#installation)  
-4. [Running Stable Diffusion](#running-stable-diffusion)  
-5. [Uninstall](#uninstall)  
-6. [Summary](#summary)  
+- [Overview](#overview)
+- [Supported Architectures](#supported-architectures)
+  - [ARM64 (aarch64) – Recommended](#arm64-aarch64--recommended)
+  - [ARM32 (armv7l) – Best Effort](#arm32-armv7l--best-effort)
+- [System Requirements](#system-requirements)
+- [Installation](#installation)
+- [Running Stable Diffusion](#running-stable-diffusion)
+- [Offline Mode](#offline-mode)
+- [Uninstalling](#uninstalling)
+- [Known Limitations](#known-limitations)
+- [Credits](#credits)
+- [Recommendation Summary](#recommendation-summary)
 
 ---
 
 ## Overview
 
-This project provides a **fully automated, zero-input setup** for:
+This setup installs and configures:
 
-- AUTOMATIC1111 Stable Diffusion WebUI (ARM64, CPU-only)
-- A unified launcher with LAN and offline modes
-- Automatic model installation
-- Clean uninstall support
+- AUTOMATIC1111 Stable Diffusion WebUI
+- Python virtual environment
+- CPU-only PyTorch (no CUDA / no ROCm)
+- Unified launcher (`~/run_sd.sh`)
+- Clean uninstall script
 
-Once installed, Stable Diffusion can be run **entirely offline**.
-
----
-
-## Features
-
-### Fully Automated Installation
-
-The installer performs all setup steps automatically:
-
-- Installs required system dependencies  
-- Creates a Python virtual environment  
-- Clones the AUTOMATIC1111 Stable Diffusion WebUI  
-- Installs CPU-only Python requirements  
-- Downloads supported models  
-- Creates a unified launcher script  
-
-No manual configuration is required.
+Designed for **Raspberry Pi OS**, **Debian**, and other ARM Linux distributions.
 
 ---
 
-### Unified Launcher
+## Supported Architectures
 
-Stable Diffusion is launched using:
-
-```bash
-~/run_sd.sh
-```
-
-The launcher menu:
-
-```text
-1) Run connected to the internet (LAN mode)
-2) Run completely offline (local mode)
-3) Uninstall
-4) Quit
-```
-
-#### LAN Mode
-
-```bash
-python launch.py --skip-torch-cuda-test --no-half --listen
-```
-
-- Activates the virtual environment  
-- Binds to all network interfaces  
-- Allows access from other devices on your LAN  
-- Prints the access URL in the terminal  
-
-#### Offline Mode
-
-```bash
-python launch.py --skip-torch-cuda-test --no-half
-```
-
-- Activates the virtual environment  
-- Binds to `127.0.0.1` only  
-- Requires no internet connection  
-
-#### Quit
-
-Exits the launcher without starting Stable Diffusion.
+The installer **automatically detects your CPU architecture** and installs the
+appropriate PyTorch build.
 
 ---
 
-### Automatic Model Installation
+### ARM64 (aarch64) – Recommended
 
-The installer automatically downloads:
+This is the **preferred and most reliable configuration**.
 
-- `Realistic_Vision_V5.1-inpainting.safetensors`  
-- `CyberRealistic_V7.0_FP16.safetensors`  
+**Details:**
+- Uses **official CPU-only PyTorch wheels**
+- Installed from the official PyTorch CPU index
+- Fully compatible with modern Python versions
 
-If `CyberRealistic_V7.0_FP16.safetensors` becomes corrupted or partially downloaded, AUTOMATIC1111 may show safetensors errors.
+**Why ARM64 is recommended:**
+- Faster installation
+- Fewer dependency issues
+- Better performance
+- Works best on Raspberry Pi 4 / 5 (64-bit OS)
 
-To remove the corrupted file:
+---
 
-```bash
-rm ~/stable-diffusion-webui/models/Stable-diffusion/CyberRealistic_V7.0_FP16.safetensors
-```
+### ARM32 (armv7l) – Best Effort
+
+ARM32 (32-bit Raspberry Pi OS) support is provided on a **best-effort basis**.
+
+**How it works:**
+- Installs **prebuilt ARM32 wheels** for:
+  - `torch`
+  - `torchvision`
+  - `numpy` (when available)
+- Wheels are sourced from:
+  **PINTO0309 / pytorch4raspberrypi**
+- Python version is matched dynamically (e.g. `cp39`, `cp310`)
+
+**Limitations:**
+- Not all Python versions have matching wheels
+- Significantly slower than ARM64
+- Higher memory pressure
+
+**If matching wheels are unavailable:**
+- Installation stops with a clear error
+- You are instructed to switch to a **64-bit OS**
+
+---
+
+## System Requirements
+
+### Minimum
+- Raspberry Pi 4 / 5 or other ARM SBC
+- 4 GB RAM (8 GB recommended)
+- Internet connection (for install)
+
+### Strongly Recommended
+- **64-bit Raspberry Pi OS**
+
+### Required Packages
+- `python3`
+- `python3-venv`
+- `git`
+- `curl`
+- `wget`
 
 ---
 
 ## Installation
 
-Install everything with one command:
+Install everything with **one command**:
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/comp6062/arm64-automatic1111/main/setup_sd.sh | bash
 ```
 
-Or:
+Or using `wget`:
 
 ```bash
 wget -qO- https://raw.githubusercontent.com/comp6062/arm64-automatic1111/main/setup_sd.sh | bash
 ```
 
-The installer will:
+### The installer will:
 
-- Install all dependencies  
-- Create a Python virtual environment  
-- Clone AUTOMATIC1111  
-- Install Python requirements  
-- Download models  
-- Create `~/run_sd.sh`  
+- Install system dependencies
+- Create a Python virtual environment
+- Clone AUTOMATIC1111 Stable Diffusion WebUI
+- Install Python requirements
+- Download default models
+- Create `~/run_sd.sh` and `~/remove.sh`
 
 ---
 
 ## Running Stable Diffusion
 
-1. Launch the unified launcher:
+Launch the unified launcher:
 
 ```bash
 ~/run_sd.sh
 ```
 
-2. Select LAN or Offline mode.
-3. Open the printed URL in your web browser.
-4. Start generating images.
+Then:
+
+1. Select **LAN** or **Offline** mode
+2. Open the printed URL in your browser
+3. Start generating images
 
 ---
 
-## Uninstall
+## Offline Mode
 
-To completely remove Stable Diffusion:
+Offline mode runs Stable Diffusion **without internet access**:
+
+- Uses already downloaded models
+- Skips package installation and updates
+- Accessible at:
+
+```
+http://127.0.0.1:7860
+```
+
+---
+
+## Uninstalling
+
+To completely remove everything:
 
 ```bash
-~/run_sd.sh
-# choose option 3
+~/remove.sh
 ```
 
 This removes:
 
-- The Stable Diffusion WebUI directory  
-- The Python virtual environment  
-- All launcher scripts created by the installer  
+- Stable Diffusion WebUI
+- Python virtual environment
+- Launcher and uninstall scripts
 
 ---
 
-## Summary
+## Known Limitations
 
-This repository provides:
+- CPU-only inference (no GPU acceleration)
+- ARM32 is slower and less stable
+- Large models may exceed available RAM
+- First generation can take several minutes on Raspberry Pi hardware
 
-- A fully automated ARM64 AUTOMATIC1111 installer  
-- CPU-only Stable Diffusion support  
-- LAN and offline execution modes  
-- Automatic model installation  
-- Clean uninstall support  
+---
+
+## Credits
+
+- AUTOMATIC1111 – Stable Diffusion WebUI
+- PyTorch Team – CPU wheel support
+- PINTO0309 – Raspberry Pi ARM32 PyTorch wheels
+- Raspberry Pi community
+
+---
+
+## Recommendation Summary
+
+| Architecture | Status |
+|-------------|--------|
+| ARM64 (aarch64) | Fully supported (recommended) |
+| ARM32 (armv7l) | Best effort only |
+
+If installation fails on ARM32, switch to a **64-bit OS**.
