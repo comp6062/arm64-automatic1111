@@ -1,4 +1,4 @@
-# ⭐ Stable Diffusion Automatic1111 (ARM64) — Full Installer  
+# ⭐ Stable Diffusion AUTOMATIC1111 (ARM64) — Full Installer
 ### CPU-Only • ARM64 • Raspberry Pi Ready • Fully Automated
 
 ![Platform](https://img.shields.io/badge/Platform-ARM64-blue)
@@ -8,7 +8,7 @@
 ![Installer](https://img.shields.io/badge/Installer-Fully%20Automated-success)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
-A completely automated ARM64 installer for **AUTOMATIC1111 Stable Diffusion WebUI (CPU-only)** with offline/online launch modes, automatic model downloads, and clean uninstall options.
+A **completely automated ARM64 installer** for **AUTOMATIC1111 Stable Diffusion WebUI (CPU-only)** with clean online/offline launch modes, automatic model downloads, and full uninstall support.
 
 Designed for:
 
@@ -19,57 +19,59 @@ Designed for:
 
 ---
 
-# 📚 Table of Contents
+## 📚 Table of Contents
+
 1. [Overview](#overview)  
 2. [Features](#features)  
-   - [Automated A1111 Installation](#1-fully-automated-a1111-installation-cpu-only-arm64)  
-   - [Unified Launcher (`run_sd.sh`)](#2-unified-launcher-runsdsh)  
-   - [Automatic Model Installation](#3-models-installed-automatically)  
+   - [Fully Automated Installation](#fully-automated-installation)  
+   - [Unified Launcher](#unified-launcher)  
+   - [Automatic Model Installation](#automatic-model-installation)  
 3. [Installation](#installation)  
 4. [Running Stable Diffusion](#running-stable-diffusion)  
 5. [Uninstall](#uninstall)  
-6. [Summary](#summary)
+6. [Summary](#summary)  
 
 ---
 
-# Overview
+## Overview
 
 This project provides a **fully automated, zero-input setup** for:
 
-- AUTOMATIC1111 Stable Diffusion WebUI (CPU-only ARM64)
-- Unified launcher with online and offline modes
-- Automatic inpainting & realism model installation
-- Clean uninstall scripts
+- AUTOMATIC1111 Stable Diffusion WebUI (ARM64, CPU-only)
+- A unified launcher with LAN and offline modes
+- Automatic model installation
+- Clean uninstall support
 
-Everything works completely offline after install.
+Once installed, Stable Diffusion can be run **entirely offline**.
 
 ---
 
-# Features
+## Features
 
-## 1. Fully Automated A1111 Installation (CPU-only, ARM64)
+### Fully Automated Installation
 
-The installer:
+The installer performs all setup steps automatically:
 
+- Installs required system dependencies  
 - Creates a Python virtual environment  
-- Clones A1111 Stable Diffusion WebUI  
-- Installs CPU-only dependencies  
-- Installs required system packages  
+- Clones the AUTOMATIC1111 Stable Diffusion WebUI  
+- Installs CPU-only Python requirements  
 - Downloads supported models  
+- Creates a unified launcher script  
 
-No configuration needed.
+No manual configuration is required.
 
 ---
 
-## 2. Unified Launcher (`~/run_sd.sh`)
+### Unified Launcher
 
-Start Stable Diffusion anytime with:
+Stable Diffusion is launched using:
 
 ```bash
 ~/run_sd.sh
 ```
 
-Menu:
+The launcher menu:
 
 ```text
 1) Run connected to the internet (LAN mode)
@@ -78,49 +80,43 @@ Menu:
 4) Quit
 ```
 
-### Mode 1 — LAN Mode:
+#### LAN Mode
 
 ```bash
 python launch.py --skip-torch-cuda-test --no-half --listen
 ```
 
-- Activates the venv  
-- Binds to all interfaces so other devices on your LAN can access it  
-- Prints the local access URL  
+- Activates the virtual environment  
+- Binds to all network interfaces  
+- Allows access from other devices on your LAN  
+- Prints the access URL in the terminal  
 
-### Mode 2 — Offline Mode:
+#### Offline Mode
 
 ```bash
 python launch.py --skip-torch-cuda-test --no-half
 ```
 
-- Activates the venv  
+- Activates the virtual environment  
 - Binds to `127.0.0.1` only  
-- Fully offline operation  
+- Requires no internet connection  
 
-### Mode 3 — Uninstall
+#### Quit
 
-- Calls the uninstall script created by the installer  
-- Removes the Stable Diffusion WebUI directory  
-- Removes the virtual environment  
-- Removes launcher scripts  
-
-### Mode 4 — Quit
-
-- Exits without launching anything.
+Exits the launcher without starting Stable Diffusion.
 
 ---
 
-## 3. Models Installed Automatically
+### Automatic Model Installation
 
-Installer downloads:
+The installer automatically downloads:
 
-- `Realistic_Vision_V5.1-inpainting.safetensors`
-- `CyberRealistic_V7.0_FP16.safetensors`
+- `Realistic_Vision_V5.1-inpainting.safetensors`  
+- `CyberRealistic_V7.0_FP16.safetensors`  
 
-If `CyberRealistic_V7.0_FP16.safetensors` becomes corrupted or partially downloaded, A1111 may show safetensors errors.
+If `CyberRealistic_V7.0_FP16.safetensors` becomes corrupted or partially downloaded, AUTOMATIC1111 may show safetensors errors.
 
-Remove the broken file with:
+To remove the corrupted file:
 
 ```bash
 rm ~/stable-diffusion-webui/models/Stable-diffusion/CyberRealistic_V7.0_FP16.safetensors
@@ -128,9 +124,9 @@ rm ~/stable-diffusion-webui/models/Stable-diffusion/CyberRealistic_V7.0_FP16.saf
 
 ---
 
-# Installation
+## Installation
 
-Install everything with:
+Install everything with one command:
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/comp6062/arm64-automatic1111/main/setup_sd.sh | bash
@@ -142,34 +138,34 @@ Or:
 wget -qO- https://raw.githubusercontent.com/comp6062/arm64-automatic1111/main/setup_sd.sh | bash
 ```
 
-The script will:
+The installer will:
 
-- Install dependencies  
+- Install all dependencies  
 - Create a Python virtual environment  
-- Clone AUTOMATIC1111’s WebUI  
+- Clone AUTOMATIC1111  
 - Install Python requirements  
 - Download models  
 - Create `~/run_sd.sh`  
 
 ---
 
-# Running Stable Diffusion
+## Running Stable Diffusion
 
-1. Launch Stable Diffusion:
+1. Launch the unified launcher:
 
 ```bash
 ~/run_sd.sh
 ```
 
-2. Choose LAN or Offline mode.
-3. Open the printed URL in your browser.
-4. Begin generating images.
+2. Select LAN or Offline mode.
+3. Open the printed URL in your web browser.
+4. Start generating images.
 
 ---
 
-# Uninstall
+## Uninstall
 
-Uninstall everything:
+To completely remove Stable Diffusion:
 
 ```bash
 ~/run_sd.sh
@@ -178,18 +174,18 @@ Uninstall everything:
 
 This removes:
 
-- Stable Diffusion WebUI directory  
-- Python virtual environment  
-- Launcher scripts  
+- The Stable Diffusion WebUI directory  
+- The Python virtual environment  
+- All launcher scripts created by the installer  
 
 ---
 
-# Summary
+## Summary
 
-This repo provides:
+This repository provides:
 
-- Fully automated A1111 ARM64 installer  
-- CPU-only support  
-- Unified launcher with offline and LAN modes  
-- Automatic model installs  
-- Full uninstall options  
+- A fully automated ARM64 AUTOMATIC1111 installer  
+- CPU-only Stable Diffusion support  
+- LAN and offline execution modes  
+- Automatic model installation  
+- Clean uninstall support  
