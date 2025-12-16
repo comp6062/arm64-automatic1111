@@ -117,13 +117,13 @@ ARM32 (32-bit Raspberry Pi OS) support is provided on a **best-effort basis**.
 Install everything with **one command**:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/comp6062/arm64-automatic1111/main/setup_sd.sh | bash
+curl -sSL https://raw.githubusercontent.com/comp6062/rpi-automatic1111/main/setup_sd.sh | bash
 ```
 
 Or using `wget`:
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/comp6062/arm64-automatic1111/main/setup_sd.sh | bash
+wget -qO- https://raw.githubusercontent.com/comp6062/rpi-automatic1111/main/setup_sd.sh | bash
 ```
 
 ### The installer will:
