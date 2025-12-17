@@ -16,6 +16,7 @@
 #   - Downloads a couple of default models (optional but enabled by default)
 #   - Creates ~/run_sd.sh and ~/remove.sh
 #
+
 set -euo pipefail
 
 # Colors
@@ -46,12 +47,17 @@ ARCH="$(uname -m || true)"
 
 progress_bar "Detected architecture: ${ARCH}"
 
+need_cmd apt-get
+need_cmd uname
+
 progress_bar "Updating and upgrading system..."
 $SUDO apt-get update -y
-$SUDO apt-get upgrade -y
+# Keep automation safe/non-interactive: avoid upgrade prompts on some systems
+# (still allowed to run manually if you want)
+$SUDO DEBIAN_FRONTEND=noninteractive apt-get -y upgrade || true
 
 progress_bar "Installing necessary dependencies..."
-$SUDO apt-get install -y \
+$SUDO DEBIAN_FRONTEND=noninteractive apt-get install -y \
   git curl wget ca-certificates \
   python3 python3-venv python3-pip \
   build-essential cmake pkg-config \
@@ -60,8 +66,10 @@ $SUDO apt-get install -y \
   libopenblas-dev libatlas-base-dev \
   ffmpeg
 
-need_cmd git
 need_cmd "$PYTHON_BIN"
+need_cmd git
+need_cmd curl
+need_cmd wget
 
 progress_bar "Setting up virtual environment..."
 if [ ! -d "$VENV_DIR" ]; then
@@ -110,13 +118,11 @@ install_torch_arm32_best_effort() {
 
   html="$(cat "${tmpdir}/release.html")"
 
-  # Extract any browser_download_url-style links (sometimes present), else extract /download/... .whl links
-  # We'll normalize to full URLs.
+  # Extract any .whl asset links and normalize to full URLs.
   mapfile -t links < <(printf "%s" "$html" | \
     grep -Eo 'href="[^"]+\.whl"' | \
     sed -E 's/^href="//; s/"$//; s/&amp;/\&/g' | \
     sed -E 's#^/PINTO0309/pytorch4raspberrypi/releases/download/#https://github.com/PINTO0309/pytorch4raspberrypi/releases/download/#' | \
-    sed -E 's#^https://github.com/#https://github.com/#' | \
     sort -u)
 
   if [ "${#links[@]}" -eq 0 ]; then
@@ -128,6 +134,7 @@ install_torch_arm32_best_effort() {
   # Accept common patterns: cp39, cp310, etc, and linux_armv7l / armv7l / arm-linux-gnueabihf.
   local want="cp${PYV}"
   local torch_url="" tv_url="" ta_url=""
+
   for l in "${links[@]}"; do
     case "$l" in
       *"${want}"*armv7l*.whl|*"${want}"*gnueabihf*.whl)
@@ -169,9 +176,15 @@ case "$ARCH" in
 esac
 
 progress_bar "Installing WebUI Python requirements..."
-# Prefer WebUI's own requirements installer patterns
-# Some packages are heavy; let WebUI manage versions. Still install them in the venv.
-pip install -r requirements_versions.txt
+# Install requirements directly (keeps it deterministic)
+if [ -f "requirements_versions.txt" ]; then
+  pip install -r requirements_versions.txt
+elif [ -f "requirements.txt" ]; then
+  pip install -r requirements.txt
+else
+  # Fallback: let launch.py self-manage if files move upstream
+  python launch.py --exit --skip-torch-cuda-test --use-cpu all --precision full --no-half || true
+fi
 
 # Optional: download a couple of default models (public Hugging Face files)
 progress_bar "Downloading default model files (if missing)..."
@@ -213,6 +226,10 @@ mkdir -p "$WEBUI_DIR/repositories"
 set +e
 [ -d "$WEBUI_DIR/repositories/stable-diffusion-webui-assets/.git" ] || git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui-assets.git "$WEBUI_DIR/repositories/stable-diffusion-webui-assets"
 [ -d "$WEBUI_DIR/repositories/stable-diffusion-stability-ai/.git" ] || git clone https://github.com/Stability-AI/stablediffusion.git "$WEBUI_DIR/repositories/stable-diffusion-stability-ai"
+[ -d "$WEBUI_DIR/repositories/generative-models/.git" ] || git clone https://github.com/Stability-AI/generative-models.git "$WEBUI_DIR/repositories/generative-models"
+[ -d "$WEBUI_DIR/repositories/k-diffusion/.git" ] || git clone https://github.com/crowsonkb/k-diffusion.git "$WEBUI_DIR/repositories/k-diffusion"
+[ -d "$WEBUI_DIR/repositories/CodeFormer/.git" ] || git clone https://github.com/sczhou/CodeFormer.git "$WEBUI_DIR/repositories/CodeFormer"
+[ -d "$WEBUI_DIR/repositories/BLIP/.git" ] || git clone https://github.com/salesforce/BLIP.git "$WEBUI_DIR/repositories/BLIP"
 set -e
 
 progress_bar "Creating run_sd.sh script..."
@@ -224,6 +241,8 @@ USER_HOME="${HOME}"
 WEBUI_DIR="$USER_HOME/stable-diffusion-webui"
 VENV_DIR="$USER_HOME/stable-diffusion-env"
 
+PORT="${SD_PORT:-7860}"
+
 if [ ! -d "$WEBUI_DIR" ] || [ ! -d "$VENV_DIR" ]; then
   echo "ERROR: Stable Diffusion not installed. Run setup_sd.sh first." >&2
   exit 1
@@ -233,27 +252,36 @@ fi
 source "$VENV_DIR/bin/activate"
 cd "$WEBUI_DIR"
 
+# Best-effort LAN IP detection (used only for a friendly display message)
 LAN_IP="$(hostname -I 2>/dev/null | awk '{print $1}' || true)"
+if [ -z "${LAN_IP}" ]; then
+  LAN_IP="$(ip route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}' || true)"
+fi
 
+echo
 echo "Select an option:"
-echo "1) Run connected to the internet (http://Local_IP:7860)"
-echo "2) Run completely offline (127.0.0.1:7860)"
+echo "1) Run connected to the internet (http://LAN_IP:${PORT})"
+echo "2) Run completely offline / localhost only (http://127.0.0.1:${PORT})"
 echo "3) Uninstall"
 echo "4) Quit"
+echo
+
 read -r -p "Enter your choice: " choice
 
-case "$choice" in
+COMMON_ARGS=(--port "$PORT" --skip-torch-cuda-test --use-cpu all --precision full --no-half)
+
+case "${choice}" in
   1)
-    echo "Running with internet connection (LAN access)..."
-    echo "Access it at: http://${LAN_IP:-127.0.0.1}:7860"
+    echo "Running with LAN access..."
+    echo "Access it at: http://${LAN_IP:-127.0.0.1}:${PORT}"
     # Listen on all interfaces
-    python launch.py --listen --port 7860 --skip-torch-cuda-test
+    python launch.py --listen "${COMMON_ARGS[@]}"
     ;;
   2)
-    echo "Running completely offline (localhost only)..."
-    echo "Access it at: http://127.0.0.1:7860"
+    echo "Running localhost-only..."
+    echo "Access it at: http://127.0.0.1:${PORT}"
     # Bind to localhost only
-    python launch.py --listen --port 7860 --skip-torch-cuda-test --server-name 127.0.0.1
+    python launch.py --listen --server-name 127.0.0.1 "${COMMON_ARGS[@]}"
     ;;
   3)
     echo "Uninstalling..."
