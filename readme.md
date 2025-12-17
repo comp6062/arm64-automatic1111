@@ -23,6 +23,7 @@ a guided installer, unified launcher, and clean uninstall process.
 - [Architecture Detection & Install Logic](#architecture-detection--install-logic)
 - [System Requirements](#system-requirements)
 - [Installation](#installation)
+- [Model Download Control (Setup Script)](#model-download-control-setup-script)
 - [Running Stable Diffusion](#running-stable-diffusion)
 - [Offline Mode](#offline-mode)
 - [Uninstalling](#uninstalling)
@@ -173,6 +174,77 @@ wget -qO- https://raw.githubusercontent.com/comp6062/rpi-automatic1111/main/setu
 
 ---
 
+# Model Download Control (Setup Script)
+
+## Default Model Download Behavior
+
+By default, the setup script **automatically downloads a small set of example Stable Diffusion models** during installation.  
+This allows the WebUI to be used immediately after setup completes.
+
+Model downloads only occur if the files are **not already present**.
+
+---
+
+## Disable Model Downloads During Setup
+
+If you prefer to **skip downloading models during installation** (for example, for offline systems or when supplying your own models), you can disable this behavior.
+
+### How to Disable
+
+1. Open the setup script:
+   ```bash
+   nano setup_sd.sh
+   ```
+
+2. Locate the model download section.
+
+3. Comment out the two download lines as shown below.
+
+### Disabled (No Model Downloads)
+
+```bash
+# download_if_missing "$MODEL1_URL" "$MODEL1_PATH"
+# download_if_missing "$MODEL2_URL" "$MODEL2_PATH"
+```
+
+When disabled:
+- No models are downloaded during setup
+- Installation still completes normally
+- The WebUI will start without errors
+- Models can be added later manually
+
+---
+
+## Enable Model Downloads (Default)
+
+To enable model downloads (or re-enable them), ensure the lines are **not commented out**.
+
+### Enabled (Download Models During Setup)
+
+```bash
+download_if_missing "$MODEL1_URL" "$MODEL1_PATH"
+download_if_missing "$MODEL2_URL" "$MODEL2_PATH"
+```
+
+When enabled:
+- Missing models are downloaded automatically
+- Existing models are never overwritten
+- Setup remains non-interactive
+
+---
+
+## Adding Models Manually (Optional)
+
+If model downloads are disabled, place your `.ckpt` or `.safetensors` files in:
+
+```
+~/stable-diffusion-webui/models/Stable-diffusion/
+```
+
+Restart the WebUI after adding new models.
+
+---
+
 ## Running Stable Diffusion
 
 Launch the unified launcher:
@@ -210,12 +282,6 @@ To completely remove everything:
 ```bash
 ~/remove.sh
 ```
-
-This removes:
-
-- Stable Diffusion WebUI
-- Python virtual environment
-- Launcher and uninstall scripts
 
 ---
 
