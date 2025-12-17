@@ -181,10 +181,31 @@ wget -qO- https://raw.githubusercontent.com/comp6062/rpi-automatic1111/main/setu
 By default, the setup script **automatically downloads a small set of example Stable Diffusion models** during installation.  
 This allows the WebUI to be used immediately after setup completes.
 
-Model downloads only occur if the files are **not already present**.
 
 ---
 
+
+## Enable Model Downloads (Default)
+
+To enable model downloads (or re-enable them), ensure the lines are **not commented out**.
+
+### Enabled (Download Models During Setup)
+
+
+```bash
+MODEL1_PATH="$WEBUI_DIR/models/Stable-diffusion/CyberRealistic_V7.0_FP16.safetensors"
+MODEL1_URL="https://huggingface.co/cyberdelia/CyberRealistic/resolve/main/CyberRealistic_V7.0_FP16.safetensors"
+MODEL2_PATH="$WEBUI_DIR/models/Stable-diffusion/Realistic_Vision_V5.1-inpainting.safetensors"
+MODEL2_URL="https://huggingface.co/SG161222/Realistic_Vision_V5.1_noVAE/resolve/main/Realistic_Vision_V5.1-inpainting.safetensors"
+```
+
+When enabled:
+- Missing models are downloaded automatically
+- Existing models are never overwritten
+- Setup remains non-interactive
+
+
+---
 ## Disable Model Downloads During Setup
 
 If you prefer to **skip downloading models during installation** (for example, for offline systems or when supplying your own models), you can disable this behavior.
@@ -201,10 +222,11 @@ If you prefer to **skip downloading models during installation** (for example, f
 3. Comment out the two download lines as shown below.
 
 ### Disabled (No Model Downloads)
-
 ```bash
-# download_if_missing "$MODEL1_URL" "$MODEL1_PATH"
-# download_if_missing "$MODEL2_URL" "$MODEL2_PATH"
+#MODEL1_PATH="$WEBUI_DIR/models/Stable-diffusion/CyberRealistic_V7.0_FP16.safetensors"
+#MODEL1_URL="https://huggingface.co/cyberdelia/CyberRealistic/resolve/main/CyberRealistic_V7.0_FP16.safetensors"
+#MODEL2_PATH="$WEBUI_DIR/models/Stable-diffusion/Realistic_Vision_V5.1-inpainting.safetensors"
+#MODEL2_URL="https://huggingface.co/SG161222/Realistic_Vision_V5.1_noVAE/resolve/main/Realistic_Vision_V5.1-inpainting.safetensors"
 ```
 
 When disabled:
@@ -215,33 +237,17 @@ When disabled:
 
 ---
 
-## Enable Model Downloads (Default)
-
-To enable model downloads (or re-enable them), ensure the lines are **not commented out**.
-
-### Enabled (Download Models During Setup)
-
-```bash
-download_if_missing "$MODEL1_URL" "$MODEL1_PATH"
-download_if_missing "$MODEL2_URL" "$MODEL2_PATH"
-```
-
-When enabled:
-- Missing models are downloaded automatically
-- Existing models are never overwritten
-- Setup remains non-interactive
-
----
-
 ## Adding Models Manually (Optional)
 
 If model downloads are disabled, place your `.ckpt` or `.safetensors` files in:
 
-```
+```bash
 ~/stable-diffusion-webui/models/Stable-diffusion/
 ```
 
 Restart the WebUI after adding new models.
+
+
 
 ---
 
