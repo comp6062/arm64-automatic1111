@@ -16,6 +16,7 @@
 #   - Downloads a couple of default models (optional but enabled by default)
 #   - Creates ~/run_sd.sh and ~/remove.sh
 #
+
 set -euo pipefail
 
 # Colors
@@ -31,7 +32,6 @@ die() { echo -e "${RED}ERROR: $*${NC}" >&2; exit 1; }
 
 need_cmd() { command -v "$1" >/dev/null 2>&1 || die "Missing required command: $1"; }
 
-# Ensure we have sudo when needed
 SUDO=""
 if [ "${EUID:-$(id -u)}" -ne 0 ]; then
   SUDO="sudo"
@@ -43,15 +43,17 @@ VENV_DIR="$USER_HOME/stable-diffusion-env"
 PYTHON_BIN="python3"
 
 ARCH="$(uname -m || true)"
-
 progress_bar "Detected architecture: ${ARCH}"
+
+need_cmd apt-get
+need_cmd uname
 
 progress_bar "Updating and upgrading system..."
 $SUDO apt-get update -y
-$SUDO apt-get upgrade -y
+$SUDO DEBIAN_FRONTEND=noninteractive apt-get -y upgrade || true
 
 progress_bar "Installing necessary dependencies..."
-$SUDO apt-get install -y \
+$SUDO DEBIAN_FRONTEND=noninteractive apt-get install -y \
   git curl wget ca-certificates \
   python3 python3-venv python3-pip \
   build-essential cmake pkg-config \
@@ -60,8 +62,10 @@ $SUDO apt-get install -y \
   libopenblas-dev libatlas-base-dev \
   ffmpeg
 
-need_cmd git
 need_cmd "$PYTHON_BIN"
+need_cmd git
+need_cmd curl
+need_cmd wget
 
 progress_bar "Setting up virtual environment..."
 if [ ! -d "$VENV_DIR" ]; then
@@ -70,7 +74,6 @@ fi
 # shellcheck disable=SC1091
 source "$VENV_DIR/bin/activate"
 
-# Keep pip sane
 pip install --upgrade pip setuptools wheel
 
 progress_bar "Cloning Stable Diffusion WebUI repository..."
@@ -82,20 +85,18 @@ fi
 
 cd "$WEBUI_DIR"
 
-# Helpful to avoid interactive Git prompts at first run
+# Hard-disable interactive git prompts (both setup + runtime)
 export GIT_TERMINAL_PROMPT=0
+export GIT_ASKPASS=/bin/true
 
 progress_bar "Installing PyTorch (architecture-specific)..."
 PYV="$("$PYTHON_BIN" -c 'import sys; print(f"{sys.version_info.major}{sys.version_info.minor}")')"
 
 install_torch_arm64() {
-  # Official CPU wheels index
   pip install --index-url https://download.pytorch.org/whl/cpu torch torchvision torchaudio
 }
 
 install_torch_arm32_best_effort() {
-  # Best-effort: try to locate third-party armv7l wheels from PINTO0309's GitHub releases.
-  # If we can't find matching wheels, we fail with a clear message (README says best-effort).
   local tmpdir tag url html
   tmpdir="$(mktemp -d)"
   tag="v1.10.2-numpy1222"
@@ -110,13 +111,10 @@ install_torch_arm32_best_effort() {
 
   html="$(cat "${tmpdir}/release.html")"
 
-  # Extract any browser_download_url-style links (sometimes present), else extract /download/... .whl links
-  # We'll normalize to full URLs.
   mapfile -t links < <(printf "%s" "$html" | \
     grep -Eo 'href="[^"]+\.whl"' | \
     sed -E 's/^href="//; s/"$//; s/&amp;/\&/g' | \
     sed -E 's#^/PINTO0309/pytorch4raspberrypi/releases/download/#https://github.com/PINTO0309/pytorch4raspberrypi/releases/download/#' | \
-    sed -E 's#^https://github.com/#https://github.com/#' | \
     sort -u)
 
   if [ "${#links[@]}" -eq 0 ]; then
@@ -124,10 +122,9 @@ install_torch_arm32_best_effort() {
     die "Could not locate .whl asset links on the ARM32 wheels page. Recommendation: use a 64-bit OS (ARM64)."
   fi
 
-  # Choose wheels matching this Python version and armv7l.
-  # Accept common patterns: cp39, cp310, etc, and linux_armv7l / armv7l / arm-linux-gnueabihf.
   local want="cp${PYV}"
   local torch_url="" tv_url="" ta_url=""
+
   for l in "${links[@]}"; do
     case "$l" in
       *"${want}"*armv7l*.whl|*"${want}"*gnueabihf*.whl)
@@ -169,20 +166,21 @@ case "$ARCH" in
 esac
 
 progress_bar "Installing WebUI Python requirements..."
-# Prefer WebUI's own requirements installer patterns
-# Some packages are heavy; let WebUI manage versions. Still install them in the venv.
-pip install -r requirements_versions.txt
+if [ -f "requirements_versions.txt" ]; then
+  pip install -r requirements_versions.txt
+elif [ -f "requirements.txt" ]; then
+  pip install -r requirements.txt
+else
+  python launch.py --exit --skip-torch-cuda-test --use-cpu all --precision full --no-half || true
+fi
 
-# Optional: download a couple of default models (public Hugging Face files)
 progress_bar "Downloading default model files (if missing)..."
 mkdir -p "$WEBUI_DIR/models/Stable-diffusion"
 mkdir -p "$WEBUI_DIR/models/VAE"
 
-# CyberRealistic V7 FP16
 MODEL1_PATH="$WEBUI_DIR/models/Stable-diffusion/CyberRealistic_V7.0_FP16.safetensors"
 MODEL1_URL="https://huggingface.co/cyberdelia/CyberRealistic/resolve/main/CyberRealistic_V7.0_FP16.safetensors"
 
-# Realistic Vision 5.1 inpainting
 MODEL2_PATH="$WEBUI_DIR/models/Stable-diffusion/Realistic_Vision_V5.1-inpainting.safetensors"
 MODEL2_URL="https://huggingface.co/SG161222/Realistic_Vision_V5.1_noVAE/resolve/main/Realistic_Vision_V5.1-inpainting.safetensors"
 
@@ -193,7 +191,6 @@ download_if_missing() {
     return 0
   fi
   info "Downloading: $(basename "$out")"
-  # Large files; show progress bar if interactive
   if [ -t 1 ]; then
     wget -O "$out" "$url"
   else
@@ -201,25 +198,51 @@ download_if_missing() {
   fi
 }
 
-# These are large; failures shouldn't break the install. WebUI can run without them.
 set +e
 download_if_missing "$MODEL1_URL" "$MODEL1_PATH"
 download_if_missing "$MODEL2_URL" "$MODEL2_PATH"
 set -e
 
-# Pre-clone common repos WebUI would try to clone on first run (reduces prompts)
 progress_bar "Pre-cloning common WebUI repos to avoid first-run prompts..."
 mkdir -p "$WEBUI_DIR/repositories"
-set +e
-if [ ! -d "$WEBUI_DIR/repositories/stable-diffusion-webui-assets/.git" ]; then
-  git clone --depth 1 https://github.com/AUTOMATIC1111/stable-diffusion-webui-assets "$WEBUI_DIR/repositories/stable-diffusion-webui-assets" || true
-fi
 
-if [ ! -d "$WEBUI_DIR/repositories/stable-diffusion-stability-ai/.git" ]; then
-  # Some environments get prompted for credentials with certain GitHub URLs; these URLs are public and should not require auth.
-  git clone --depth 1 https://github.com/Stability-AI/stablediffusion "$WEBUI_DIR/repositories/stable-diffusion-stability-ai" >/dev/null 2>&1 || \
-  git clone --depth 1 https://github.com/CompVis/stable-diffusion "$WEBUI_DIR/repositories/stable-diffusion-stability-ai" >/dev/null 2>&1 || true
-fi
+# IMPORTANT FIX:
+# Stability-AI/stablediffusion is now frequently unavailable without auth.
+# WebUI expects the folder "stable-diffusion-stability-ai", but we keep it public by using CompVis as origin.
+SD_DIR="$WEBUI_DIR/repositories/stable-diffusion-stability-ai"
+SD_REMOTE="https://github.com/CompVis/stable-diffusion.git"
+
+ensure_public_sd_repo() {
+  if [ -d "$SD_DIR/.git" ]; then
+    git -C "$SD_DIR" remote set-url origin "$SD_REMOTE" >/dev/null 2>&1 || true
+    git -C "$SD_DIR" fetch --depth 1 >/dev/null 2>&1 && return 0
+    rm -rf "$SD_DIR"
+  fi
+  git clone --depth 1 "$SD_REMOTE" "$SD_DIR"
+}
+
+set +e
+[ -d "$WEBUI_DIR/repositories/stable-diffusion-webui-assets/.git" ] || \
+  git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui-assets.git \
+  "$WEBUI_DIR/repositories/stable-diffusion-webui-assets"
+
+ensure_public_sd_repo
+
+[ -d "$WEBUI_DIR/repositories/generative-models/.git" ] || \
+  git clone https://github.com/Stability-AI/generative-models.git \
+  "$WEBUI_DIR/repositories/generative-models"
+
+[ -d "$WEBUI_DIR/repositories/k-diffusion/.git" ] || \
+  git clone https://github.com/crowsonkb/k-diffusion.git \
+  "$WEBUI_DIR/repositories/k-diffusion"
+
+[ -d "$WEBUI_DIR/repositories/CodeFormer/.git" ] || \
+  git clone https://github.com/sczhou/CodeFormer.git \
+  "$WEBUI_DIR/repositories/CodeFormer"
+
+[ -d "$WEBUI_DIR/repositories/BLIP/.git" ] || \
+  git clone https://github.com/salesforce/BLIP.git \
+  "$WEBUI_DIR/repositories/BLIP"
 set -e
 
 progress_bar "Creating run_sd.sh script..."
@@ -230,41 +253,48 @@ set -euo pipefail
 USER_HOME="${HOME}"
 WEBUI_DIR="$USER_HOME/stable-diffusion-webui"
 VENV_DIR="$USER_HOME/stable-diffusion-env"
+PORT="${SD_PORT:-7860}"
 
 if [ ! -d "$WEBUI_DIR" ] || [ ! -d "$VENV_DIR" ]; then
   echo "ERROR: Stable Diffusion not installed. Run setup_sd.sh first." >&2
   exit 1
 fi
 
+# Hard-disable interactive git prompts so the run script never hangs
+export GIT_TERMINAL_PROMPT=0
+export GIT_ASKPASS=/bin/true
+
 # shellcheck disable=SC1091
 source "$VENV_DIR/bin/activate"
 cd "$WEBUI_DIR"
 
-# Avoid interactive Git credential prompts during runtime (the script uses only public repos).
-export GIT_TERMINAL_PROMPT=0
-export GIT_ASKPASS=/bin/true
-
 LAN_IP="$(hostname -I 2>/dev/null | awk '{print $1}' || true)"
+if [ -z "${LAN_IP}" ]; then
+  LAN_IP="$(ip route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}' || true)"
+fi
 
+echo
 echo "Select an option:"
-echo "1) Run connected to the internet (http://Local_IP:7860)"
-echo "2) Run completely offline (127.0.0.1:7860)"
+echo "1) Run connected to the internet (http://LAN_IP:${PORT})"
+echo "2) Run completely offline / localhost only (http://127.0.0.1:${PORT})"
 echo "3) Uninstall"
 echo "4) Quit"
+echo
+
 read -r -p "Enter your choice: " choice
 
-case "$choice" in
+COMMON_ARGS=(--port "$PORT" --skip-torch-cuda-test --use-cpu all --precision full --no-half)
+
+case "${choice}" in
   1)
-    echo "Running with internet connection (LAN access)..."
-    echo "Access it at: http://${LAN_IP:-127.0.0.1}:7860"
-    # Listen on all interfaces
-    python launch.py --listen --port 7860 --skip-torch-cuda-test
+    echo "Running with LAN access..."
+    echo "Access it at: http://${LAN_IP:-127.0.0.1}:${PORT}"
+    python launch.py --listen "${COMMON_ARGS[@]}"
     ;;
   2)
-    echo "Running completely offline (localhost only)..."
-    echo "Access it at: http://127.0.0.1:7860"
-    # Bind to localhost only
-    python launch.py --listen --port 7860 --skip-torch-cuda-test --server-name 127.0.0.1
+    echo "Running localhost-only..."
+    echo "Access it at: http://127.0.0.1:${PORT}"
+    python launch.py --listen --server-name 127.0.0.1 "${COMMON_ARGS[@]}"
     ;;
   3)
     echo "Uninstalling..."
