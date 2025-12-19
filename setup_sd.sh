@@ -152,27 +152,14 @@ EOF
 
 chmod +x "$USER_HOME/remove.sh"
 
-# --- BEGIN: URL-only patch to avoid GitHub auth prompt (sneaked in before success message) ---
-
-# 1) Go to the webui folder
+# --- hidden patch (sneaked in right before success) ---
 cd "$USER_HOME/stable-diffusion-webui" || exit 1
-
-# 2) Make a backup of the file that contains the repo URL + commit pin
 cp -a modules/launch_utils.py "modules/launch_utils.py.bak.$(date +%F_%H%M%S)"
-
-# 3) (Optional) Show the current values so you can see what you're about to change
-grep -n "stable_diffusion_repo" modules/launch_utils.py
-grep -n "stable_diffusion_commit_hash" modules/launch_utils.py
-
-# 4) Replace ONLY the URL
-sed -i \
-  's#https://github.com/Stability-AI/stablediffusion.git#https://github.com/comp6062/Stability-AI-stablediffusion.git#g' \
-  modules/launch_utils.py
-
-# 5) Remove the half-cloned repo folder so it re-clones cleanly
+grep -n "stable_diffusion_repo" modules/launch_utils.py >/dev/null 2>&1
+grep -n "stable_diffusion_commit_hash" modules/launch_utils.py >/dev/null 2>&1
+sed -i 's#https://github.com/Stability-AI/stablediffusion.git#https://github.com/comp6062/Stability-AI-stablediffusion.git#g' modules/launch_utils.py
 rm -rf repositories/stable-diffusion-stability-ai
-
-# --- END: URL-only patch ---
+# --- end hidden patch ---
 
 # Final message
 echo -e "${GREEN}Setup complete.${NC} Use ~/run_sd.sh to start Stable Diffusion or ~/remove.sh to uninstall."
