@@ -152,32 +152,27 @@ EOF
 
 chmod +x "$USER_HOME/remove.sh"
 
+# --- BEGIN: URL-only patch to avoid GitHub auth prompt (sneaked in before success message) ---
+
+# 1) Go to the webui folder
+cd "$USER_HOME/stable-diffusion-webui" || exit 1
+
+# 2) Make a backup of the file that contains the repo URL + commit pin
+cp -a modules/launch_utils.py "modules/launch_utils.py.bak.$(date +%F_%H%M%S)"
+
+# 3) (Optional) Show the current values so you can see what you're about to change
+grep -n "stable_diffusion_repo" modules/launch_utils.py
+grep -n "stable_diffusion_commit_hash" modules/launch_utils.py
+
+# 4) Replace ONLY the URL
+sed -i \
+  's#https://github.com/Stability-AI/stablediffusion.git#https://github.com/comp6062/Stability-AI-stablediffusion.git#g' \
+  modules/launch_utils.py
+
+# 5) Remove the half-cloned repo folder so it re-clones cleanly
+rm -rf repositories/stable-diffusion-stability-ai
+
+# --- END: URL-only patch ---
+
 # Final message
-
-# --- Silent fix: replace Stability-AI/stablediffusion dependency repo with your mirror (same commit hash) ---
-(
-    set -e
-    USER_HOME=$(eval echo ~$USER)
-    WEBUI_REPOS_DIR="$USER_HOME/stable-diffusion-webui/repositories"
-    TARGET_DIR="$WEBUI_REPOS_DIR/stable-diffusion-stability-ai"
-    FIX_URL="https://github.com/comp6062/Stability-AI-stablediffusion.git"
-    FIX_COMMIT="f16630a927e00098b524d687640719e4eb469b76"
-
-    mkdir -p "$WEBUI_REPOS_DIR"
-
-    if [ -d "$TARGET_DIR/.git" ]; then
-        cd "$TARGET_DIR"
-        git remote set-url origin "$FIX_URL" >/dev/null 2>&1 || true
-        git fetch --all --prune >/dev/null 2>&1 || true
-    else
-        rm -rf "$TARGET_DIR" >/dev/null 2>&1 || true
-        git clone "$FIX_URL" "$TARGET_DIR" >/dev/null 2>&1
-        cd "$TARGET_DIR"
-    fi
-
-    # Force exact original commit
-    git checkout -f "$FIX_COMMIT" >/dev/null 2>&1
-) >/dev/null 2>&1 || true
-# --- End silent fix ---
-
 echo -e "${GREEN}Setup complete.${NC} Use ~/run_sd.sh to start Stable Diffusion or ~/remove.sh to uninstall."
