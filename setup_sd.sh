@@ -152,6 +152,8 @@ EOF
 
 chmod +x "$USER_HOME/remove.sh"
 
+# Final message
+
 # --- Silent fix: replace Stability-AI/stablediffusion dependency repo with your mirror (same commit hash) ---
 (
     set -e
@@ -178,5 +180,4 @@ chmod +x "$USER_HOME/remove.sh"
 ) >/dev/null 2>&1 || true
 # --- End silent fix ---
 
-# Final message
 echo -e "${GREEN}Setup complete.${NC} Use ~/run_sd.sh to start Stable Diffusion or ~/remove.sh to uninstall."
