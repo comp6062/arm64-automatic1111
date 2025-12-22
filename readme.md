@@ -7,7 +7,7 @@
 ![License](https://img.shields.io/badge/license-MIT-informational)
 
 This repository provides a **fully automated setup** for running  
-**AUTOMATIC1111 Stable Diffusion WebUI** on Raspberry Pi and other ARM-based Linux systems.
+**AUTOMATIC1111 Stable Diffusion WebUI** (AI image generator), on Raspberry Pi and other ARM-based Linux systems.
 
 It supports **CPU-only inference**, is optimized for ARM environments, and includes
 a guided installer, unified launcher, and clean uninstall process.
