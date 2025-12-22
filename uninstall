@@ -1,0 +1,46 @@
+#!/bin/bash
+set -e
+
+DIR="$(cd "$(dirname "$0")" && pwd)"
+USER_HOME="$(eval echo ~$USER)"
+
+WEBUI_DIR="$USER_HOME/stable-diffusion-webui"
+VENV_DIR="$USER_HOME/stable-diffusion-env"
+
+if [ -f "$HOME/pi-apps/api" ]; then
+  source "$HOME/pi-apps/api"
+fi
+
+# Remove desktop entry
+sudo rm -f /usr/share/applications/stable-diffusion-a1111.desktop || true
+if command -v update-desktop-database >/dev/null 2>&1; then
+  sudo update-desktop-database >/dev/null 2>&1 || true
+fi
+
+# Remove launch/uninstall helpers created by setup
+rm -f "$USER_HOME/run_sd.sh" "$USER_HOME/remove.sh" || true
+
+# Remove venv (not user-generated config)
+rm -rf "$VENV_DIR" || true
+
+# Do NOT permanently delete user-generated data/config inside the webui folder.
+# Move to Trash when possible; otherwise leave it in place.
+if [ -d "$WEBUI_DIR" ]; then
+  if command -v gio >/dev/null 2>&1; then
+    gio trash "$WEBUI_DIR" || true
+  else
+    # If gio isn't available, keep the folder to avoid deleting user data.
+    :
+  fi
+fi
+
+# Purge apt packages installed via Pi-Apps (if used)
+if command -v purge_packages >/dev/null 2>&1; then
+  purge_packages || true
+fi
+
+if command -v status_green >/dev/null 2>&1; then
+  status_green "Uninstalled Stable Diffusion Automatic1111."
+else
+  echo "Uninstalled."
+fi

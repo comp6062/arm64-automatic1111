@@ -1,0 +1,38 @@
+#!/bin/bash
+set -e
+
+DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Pi-Apps API (provides install_packages, status_* and error)
+if [ -f "$HOME/pi-apps/api" ]; then
+  source "$HOME/pi-apps/api"
+fi
+
+chmod +x "$DIR/setup_sd.sh"
+bash "$DIR/setup_sd.sh"
+
+# Optional desktop entry for convenience
+DESKTOP_FILE="/usr/share/applications/stable-diffusion-a1111.desktop"
+if [ -f "$DESKTOP_FILE" ]; then
+  sudo rm -f "$DESKTOP_FILE"
+fi
+
+echo "[Desktop Entry]
+Name=Stable Diffusion WebUI (A1111)
+Comment=Launch Stable Diffusion WebUI on Raspberry Pi
+Exec=/bin/bash -lc \"$HOME/run_sd.sh\"
+Icon=$DIR/icon-64.png
+Terminal=true
+Type=Application
+Categories=Graphics;Development;Education;
+StartupNotify=true" | sudo tee "$DESKTOP_FILE" >/dev/null
+
+if command -v update-desktop-database >/dev/null 2>&1; then
+  sudo update-desktop-database >/dev/null 2>&1 || true
+fi
+
+if command -v status_green >/dev/null 2>&1; then
+  status_green "Installed Stable Diffusion Automatic1111 successfully."
+else
+  echo "Installed successfully."
+fi
