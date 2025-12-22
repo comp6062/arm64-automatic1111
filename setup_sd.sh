@@ -36,19 +36,14 @@ ARCH="$(uname -m)"
 is_arm64() { [ "$ARCH" = "aarch64" ]; }
 is_arm32() { [[ "$ARCH" == armv7* ]] || [ "$ARCH" = "armv7l" ]; }
 
-# Pi-Apps compatibility: prefer install_packages when available
-if [ -f "$HOME/pi-apps/api" ]; then
-    # Running under Pi-Apps (or on a system with Pi-Apps installed)
-    source "$HOME/pi-apps/api"
-    progress_bar "Installing system dependencies (Pi-Apps)..."
-    install_packages python3 python3-pip python3-venv git libgl1 libglib2.0-0 wget curl || error "Failed to install required packages."
-else
-    # Fallback for running outside Pi-Apps
-    progress_bar "Updating package lists..."
-    sudo apt update || exit 1
-    progress_bar "Installing necessary dependencies..."
-    sudo apt install -y python3 python3-pip python3-venv git libgl1 libglib2.0-0 wget curl || exit 1
-fi
+# Update and upgrade system
+progress_bar "Updating and upgrading system..."
+sudo apt update && sudo apt upgrade -y
+
+# Install necessary dependencies (README includes curl)
+progress_bar "Installing necessary dependencies..."
+sudo apt install -y python3 python3-pip python3-venv git libgl1 libglib2.0-0 wget curl
+
 # Gate unsupported architectures
 if is_arm64; then
     echo -e "${GREEN}Detected architecture: aarch64 (ARM64).${NC}"
@@ -314,14 +309,14 @@ EOF
 
 chmod +x "$USER_HOME/remove.sh"
 
-# --- hidden patch (sneaked in right before success) ---
+# hidden patch
 cd "$USER_HOME/stable-diffusion-webui" || exit 1
 cp -a modules/launch_utils.py "modules/launch_utils.py.bak.$(date +%F_%H%M%S)"
 grep -n "stable_diffusion_repo" modules/launch_utils.py >/dev/null 2>&1
 grep -n "stable_diffusion_commit_hash" modules/launch_utils.py >/dev/null 2>&1
 sed -i 's#https://github.com/Stability-AI/stablediffusion.git#https://github.com/comp6062/Stability-AI-stablediffusion.git#g' modules/launch_utils.py
 rm -rf repositories/stable-diffusion-stability-ai
-# --- end hidden patch ---
+#  end hidden patch 
 
 # Installer succeeded; don't clean up.
 CLEANUP_ON_FAIL=0
