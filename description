@@ -1,3 +1,9 @@
 Stable Diffusion WebUI (AUTOMATIC1111) installer for Raspberry Pi (ARM).
 Installs to ~/stable-diffusion-webui with a Python venv at ~/stable-diffusion-env.
 After install, run: ~/run_sd.sh
+
+Notes:
+- This installer applies a required compatibility patch that redirects the WebUI’s upstream git dependency
+  from the original Stability-AI stablediffusion repository to a mirror with the same commit hash.
+  This exists solely to keep installs deterministic and reliable on Raspberry Pi/ARM systems when the
+  original upstream repo is unavailable/unreliable. It does not change WebUI functionality or licensing.

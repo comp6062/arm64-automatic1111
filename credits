@@ -1,2 +1,3 @@
 App packaging for Pi-Apps: Kyle Downs (comp6062)
 Upstream: AUTOMATIC1111 Stable Diffusion WebUI
+Build note: includes a small git URL compatibility patch for deterministic Raspberry Pi/ARM installs (see description).
