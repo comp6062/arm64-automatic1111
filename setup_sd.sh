@@ -261,7 +261,7 @@ sudo -u "$TARGET_USER" git checkout 82a973c04367123ae98bd9abdf80d9eda9b910e2
 
 progress "Patching launch_utils..."
 sed -i 's#https://github.com/Stability-AI/stablediffusion.git#https://github.com/comp6062/Stability-AI-stablediffusion.git#g' modules/launch_utils.py
-sed -i 's/run_pip(f"install {clip_package}", "clip")/run_pip(f"install --no-build-isolation --no-use-pep517 {clip_package}", "clip")/g' modules/launch_utils.py
+sed -i 's/run_pip(f"install {clip_package}", "clip")/run_pip(f"install --no-build-isolation {clip_package}", "clip")/g' modules/launch_utils.py
 
 download_if_missing() {
   local url="$1" destination="$2" temporary="${2}.part" expected_hash actual_hash
@@ -303,17 +303,20 @@ source "$VENV_DIR/bin/activate"
 export PIP_CONFIG_FILE=/dev/null
 export PIP_DISABLE_PIP_VERSION_CHECK=1
 export PIP_NO_INPUT=1
+export PIP_NO_CACHE_DIR=1
 
 progress "Upgrading pip..."
-python -m pip install -U "pip<24.1" "setuptools<70" wheel packaging
+python -m pip install -U "pip==26.2.1" "setuptools<70" wheel packaging
 
 cd "$WEBUI_DIR"
 progress "Installing PyTorch..."
 python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 progress "Installing requirements..."
 python -m pip install -r requirements.txt --index-url https://pypi.org/simple
+progress "Pinning A1111 Web UI compatibility..."
+python -m pip install "fastapi==0.94.0" "pydantic==1.10.26" "starlette==0.26.1" --index-url https://pypi.org/simple
 python -m pip install pytorch-lightning==1.9.5 --index-url https://pypi.org/simple
-python -m pip install git+https://github.com/openai/CLIP.git@a1d071733d7111c9c014f024669f959182114e33 --no-deps --index-url https://pypi.org/simple
+python -m pip install --no-build-isolation git+https://github.com/openai/CLIP.git@a1d071733d7111c9c014f024669f959182114e33 --no-deps --index-url https://pypi.org/simple
 python - <<'PYVERIFY'
 import clip
 print("OpenAI CLIP import verified.")
@@ -361,7 +364,7 @@ case "\$c" in
     IP="\$(get_lan_ip)"
     echo "http://\$IP:7860"
     echo "\$\$" > "\$WEBUI_PID_FILE"
-    exec "\$VENV_DIR/bin/python" launch.py --skip-torch-cuda-test --no-half --listen
+    PIP_CONFIG_FILE=/dev/null PIP_NO_CACHE_DIR=1 REQS_FILE=requirements.txt exec "\$VENV_DIR/bin/python" launch.py --skip-torch-cuda-test --no-half --listen
     ;;
   2)
     [ -x "\$VENV_DIR/bin/python" ] && [ -f "\$WEBUI_DIR/launch.py" ] || { echo "Installation is incomplete. Run LAN mode first." >&2; exit 1; }
