@@ -452,6 +452,7 @@ download_if_missing() {
   local url="$1" destination="$2" temporary="${2}.part" expected_hash actual_hash
   local headers file_size display_size chunk_size start end expected_size actual_size chunk download_failed
   local total_downloaded overall_pct part_pct filled empty fill_text empty_text progress_line running proc_state
+  local last_total last_ns now_ns elapsed_ms delta_bytes speed_bps speed_text term_cols
   local bar_width=5
   local -a chunks=() pids=() part_pcts=(0 0 0 0 0) part_bars=("-----" "-----" "-----" "-----" "-----")
 
@@ -469,7 +470,30 @@ download_if_missing() {
     chunk_size=$(( (file_size + 4) / 5 ))
     display_size="$(awk -v bytes="$file_size" 'BEGIN { printf "%.2f GB", bytes / 1000000000 }')"
     echo "  $(basename "$destination") ($display_size)"
-    printf '\r\033[K  Model download   0%% [P1:-----|P2:-----|P3:-----|P4:-----|P5:-----]'
+
+    # Keep the live status on one physical terminal row. The added speed
+    # field can otherwise push the five-piece bar past the terminal width.
+    term_cols="$(tput cols 2>/dev/null || printf '80')"
+    [[ "$term_cols" =~ ^[0-9]+$ ]] || term_cols=80
+    if [ "$term_cols" -lt 74 ]; then
+      bar_width=1
+    elif [ "$term_cols" -lt 80 ]; then
+      bar_width=2
+    elif [ "$term_cols" -lt 90 ]; then
+      bar_width=3
+    else
+      bar_width=5
+    fi
+
+    printf -v empty_text '%*s' "$bar_width" ''
+    empty_text="${empty_text// /-}"
+    part_bars=("$empty_text" "$empty_text" "$empty_text" "$empty_text" "$empty_text")
+    printf -v progress_line '  Model download %3d%% [P1:%s|P2:%s|P3:%s|P4:%s|P5:%s]  Speed: %s' \
+      0 "${part_bars[0]}" "${part_bars[1]}" "${part_bars[2]}" "${part_bars[3]}" "${part_bars[4]}" "0.00 MB/s"
+    printf '\033[2K\r%s' "$progress_line"
+    last_total=0
+    last_ns="$(date +%s%N)"
+    speed_text="0.00 MB/s"
 
     for chunk in 0 1 2 3 4; do
       start=$(( chunk * chunk_size ))
@@ -516,9 +540,21 @@ download_if_missing() {
 
       overall_pct=$(( total_downloaded * 100 / file_size ))
       [ "$overall_pct" -gt 100 ] && overall_pct=100
-      printf -v progress_line '  Model download %3d%% [P1:%s|P2:%s|P3:%s|P4:%s|P5:%s]' \
-        "$overall_pct" "${part_bars[0]}" "${part_bars[1]}" "${part_bars[2]}" "${part_bars[3]}" "${part_bars[4]}"
-      printf '\r\033[K%s' "$progress_line"
+
+      now_ns="$(date +%s%N)"
+      elapsed_ms=$(( (now_ns - last_ns) / 1000000 ))
+      if [ "$elapsed_ms" -ge 1000 ]; then
+        delta_bytes=$(( total_downloaded - last_total ))
+        [ "$delta_bytes" -lt 0 ] && delta_bytes=0
+        speed_bps=$(( delta_bytes * 1000 / elapsed_ms ))
+        speed_text="$(awk -v bps="$speed_bps" 'BEGIN { printf "%.2f MB/s", bps / 1000000 }')"
+        last_total="$total_downloaded"
+        last_ns="$now_ns"
+      fi
+
+      printf -v progress_line '  Model download %3d%% [P1:%s|P2:%s|P3:%s|P4:%s|P5:%s]  Speed: %s' \
+        "$overall_pct" "${part_bars[0]}" "${part_bars[1]}" "${part_bars[2]}" "${part_bars[3]}" "${part_bars[4]}" "$speed_text"
+      printf '\033[2K\r%s' "$progress_line"
 
       [ "$running" -eq 0 ] && break
       sleep 0.5
