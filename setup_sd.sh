@@ -37,6 +37,89 @@ read_tty() {
   echo "${answer:-$default}"
 }
 
+read_path_tty() {
+  local prompt="$1"
+  local default="$2"
+  local answer=""
+  local key=""
+  local match=""
+  local common=""
+  local candidate=""
+  local i=0
+  local -a matches=()
+
+  if [ -r /dev/tty ]; then
+    printf '%s' "$prompt" >/dev/tty
+    while true; do
+      IFS= read -rsn1 key </dev/tty || true
+      case "$key" in
+        "")
+          printf '\n' >/dev/tty
+          break
+          ;;
+        $'\t')
+          matches=()
+          while IFS= read -r match; do
+            [ -n "$match" ] && matches+=("$match")
+          done < <(compgen -f -- "$answer")
+
+          if [ "${#matches[@]}" -eq 1 ]; then
+            candidate="${matches[0]}"
+            [ -d "$candidate" ] && candidate="${candidate%/}/"
+          elif [ "${#matches[@]}" -gt 1 ]; then
+            common="${matches[0]}"
+            for match in "${matches[@]:1}"; do
+              i=0
+              while [ "$i" -lt "${#common}" ] && [ "$i" -lt "${#match}" ] && [ "${common:i:1}" = "${match:i:1}" ]; do
+                i=$((i + 1))
+              done
+              common="${common:0:i}"
+            done
+            candidate="$common"
+          else
+            candidate="$answer"
+          fi
+
+          if [ "$candidate" != "$answer" ] && [[ "$candidate" == "$answer"* ]]; then
+            printf '%s' "${candidate:${#answer}}" >/dev/tty
+            answer="$candidate"
+          else
+            printf '\a' >/dev/tty
+          fi
+          ;;
+        $'\177'|$'\b')
+          if [ -n "$answer" ]; then
+            answer="${answer%?}"
+            printf '\b \b' >/dev/tty
+          fi
+          ;;
+        *)
+          answer+="$key"
+          printf '%s' "$key" >/dev/tty
+          ;;
+      esac
+    done
+  elif [ -t 0 ]; then
+    printf '%s' "$prompt"
+    IFS= read -r answer || true
+  fi
+
+  echo "${answer:-$default}"
+}
+
+read_menu_key() {
+  local prompt="$1"
+  local key=""
+  if [ -r /dev/tty ]; then
+    printf '%s' "$prompt" >/dev/tty
+    IFS= read -rsn1 key </dev/tty || true
+  elif [ -t 0 ]; then
+    printf '%s' "$prompt"
+    IFS= read -rsn1 key || true
+  fi
+  echo "$key"
+}
+
 ask_yes_no() {
   local prompt="$1"
   local default="$2"
@@ -56,6 +139,8 @@ TARGET_USER="$(get_target_user)"
 USER_HOME="$(get_home_for_user "$TARGET_USER")"
 
 DOWNLOAD_MODELS=1
+DOWNLOAD_CYBERREALISTIC=1
+DOWNLOAD_REALISTIC_VISION=1
 INCLUDE_GUI=1
 CREATE_DESKTOP=1
 CREATE_MENU=1
@@ -71,12 +156,13 @@ Use the menu below to choose install options.
 
   1) Download included models:  $([ "$DOWNLOAD_MODELS" = "1" ] && echo "ON" || echo "OFF")
   2) Install GUI launcher:      $([ "$INCLUDE_GUI" = "1" ] && echo "ON" || echo "OFF")
-  3) Create desktop shortcut:   $([ "$CREATE_DESKTOP" = "1" ] && echo "ON" || echo "OFF")
+     (reboot required)
+  3) Create desktop icon:       $([ "$CREATE_DESKTOP" = "1" ] && echo "ON" || echo "OFF")
   4) Create menu launcher:      $([ "$CREATE_MENU" = "1" ] && echo "ON" || echo "OFF")
   5) Install files location:    $INSTALL_ROOT
 
-  6) Start install
-  q) Quit
+  S) Start install
+  Q) Quit
 
 MENU
 }
@@ -85,9 +171,97 @@ pause_menu() {
   read_tty "Press Enter to continue..." "" >/dev/null
 }
 
+select_models() {
+  local cursor=0
+  local key=""
+  local key_rest=""
+  local cursor_1=" "
+  local cursor_2=" "
+
+  while true; do
+    [ "$cursor" -eq 0 ] && cursor_1=">" || cursor_1=" "
+    [ "$cursor" -eq 1 ] && cursor_2=">" || cursor_2=" "
+
+    clear 2>/dev/null || true
+    cat <<MENU
+
+Included model selection
+========================
+Use Up/Down to move. Press Space or Enter to toggle the highlighted model.
+
+  $cursor_1 $([ "$DOWNLOAD_CYBERREALISTIC" = "1" ] && echo "[X]" || echo "[ ]") CyberRealistic_V7.0_FP16.safetensors (2.13 GB)
+  $cursor_2 $([ "$DOWNLOAD_REALISTIC_VISION" = "1" ] && echo "[X]" || echo "[ ]") Realistic_Vision_V5.1-inpainting.safetensors (4.27 GB)
+
+  C) Continue
+  B) Back to install options
+  Q) Quit
+
+MENU
+
+    key=""
+    if [ -r /dev/tty ]; then
+      IFS= read -rsn1 key </dev/tty || true
+      if [ "$key" = $'\e' ]; then
+        key_rest=""
+        IFS= read -rsn2 -t 0.2 key_rest </dev/tty || true
+        key+="$key_rest"
+      fi
+    elif [ -t 0 ]; then
+      IFS= read -rsn1 key || true
+      if [ "$key" = $'\e' ]; then
+        key_rest=""
+        IFS= read -rsn2 -t 0.2 key_rest || true
+        key+="$key_rest"
+      fi
+    fi
+
+    case "$key" in
+      $'\e[A')
+        cursor=0
+        ;;
+      $'\e[B')
+        cursor=1
+        ;;
+      " "|"")
+        if [ "$cursor" -eq 0 ]; then
+          [ "$DOWNLOAD_CYBERREALISTIC" = "1" ] && DOWNLOAD_CYBERREALISTIC=0 || DOWNLOAD_CYBERREALISTIC=1
+        else
+          [ "$DOWNLOAD_REALISTIC_VISION" = "1" ] && DOWNLOAD_REALISTIC_VISION=0 || DOWNLOAD_REALISTIC_VISION=1
+        fi
+        ;;
+      c|C)
+        if [ "$DOWNLOAD_CYBERREALISTIC" = "1" ] || [ "$DOWNLOAD_REALISTIC_VISION" = "1" ]; then
+          return 0
+        fi
+        echo "Select at least one model while model downloads are ON."
+        pause_menu
+        ;;
+      b|B)
+        return 1
+        ;;
+      q|Q)
+        echo "Install cancelled."
+        exit 0
+        ;;
+    esac
+  done
+}
+
+selected_models_label() {
+  if [ "$DOWNLOAD_MODELS" != "1" ]; then
+    echo "off"
+  elif [ "$DOWNLOAD_CYBERREALISTIC" = "1" ] && [ "$DOWNLOAD_REALISTIC_VISION" = "1" ]; then
+    echo "on - CyberRealistic + Realistic Vision"
+  elif [ "$DOWNLOAD_CYBERREALISTIC" = "1" ]; then
+    echo "on - CyberRealistic"
+  else
+    echo "on - Realistic Vision"
+  fi
+}
+
 while true; do
   show_installer_menu
-  CHOICE="$(read_tty "Select an option: " "")"
+  CHOICE="$(read_menu_key "Select an option: ")"
   case "${CHOICE,,}" in
     1)
       [ "$DOWNLOAD_MODELS" = "1" ] && DOWNLOAD_MODELS=0 || DOWNLOAD_MODELS=1
@@ -105,7 +279,7 @@ while true; do
       ;;
     3)
       if [ "$INCLUDE_GUI" != "1" ]; then
-        echo "Desktop shortcut requires the GUI launcher."
+        echo "Desktop Icon requires the GUI launcher."
         pause_menu
       else
         [ "$CREATE_DESKTOP" = "1" ] && CREATE_DESKTOP=0 || CREATE_DESKTOP=1
@@ -120,7 +294,7 @@ while true; do
       fi
       ;;
     5)
-      NEW_ROOT="$(read_tty "Install files location [$USER_HOME]: " "$INSTALL_ROOT")"
+      NEW_ROOT="$(read_path_tty "Install files location [$USER_HOME]: " "$INSTALL_ROOT")"
       case "$NEW_ROOT" in
         "~") NEW_ROOT="$USER_HOME" ;;
         "~/"*) NEW_ROOT="$USER_HOME/${NEW_ROOT#~/}" ;;
@@ -128,12 +302,19 @@ while true; do
       NEW_ROOT="${NEW_ROOT%/}"
       [ -n "$NEW_ROOT" ] && INSTALL_ROOT="$NEW_ROOT"
       ;;
-    6)
+    s)
+      if [ "$DOWNLOAD_MODELS" = "1" ]; then
+        if ! select_models; then
+          continue
+        fi
+      fi
       break
       ;;
     q|quit|exit)
       echo "Install cancelled."
       exit 0
+      ;;
+    "")
       ;;
     *)
       echo "Invalid option."
@@ -149,16 +330,24 @@ cat <<SUMMARY
 Install summary
 ---------------
 Install files: $INSTALL_ROOT
-Models:        $([ "$DOWNLOAD_MODELS" = "1" ] && echo "on" || echo "off")
+Models:        $(selected_models_label)
 GUI:           $([ "$INCLUDE_GUI" = "1" ] && echo "on" || echo "off")
-Desktop link:  $([ "$CREATE_DESKTOP" = "1" ] && echo "on" || echo "off")
+Desktop Icon:  $([ "$CREATE_DESKTOP" = "1" ] && echo "on" || echo "off")
 Menu launcher: $([ "$CREATE_MENU" = "1" ] && echo "on" || echo "off")
 
 SUMMARY
 
-CONFIRM_INSTALL="$(read_tty "Start install with these options? [Y/n]: " "y")"
+CONFIRM_INSTALL=""
+if [ -r /dev/tty ]; then
+  IFS= read -r -n1 -p "Start install with these options? [Y/n]: " CONFIRM_INSTALL </dev/tty || true
+  printf '\n' >/dev/tty
+elif [ -t 0 ]; then
+  IFS= read -r -n1 -p "Start install with these options? [Y/n]: " CONFIRM_INSTALL || true
+  printf '\n'
+fi
+CONFIRM_INSTALL="${CONFIRM_INSTALL:-y}"
 case "${CONFIRM_INSTALL,,}" in
-  y|yes|"") ;;
+  y|"") ;;
   *) echo "Install cancelled."; exit 0 ;;
 esac
 
@@ -172,7 +361,7 @@ BACKUP_VENV_DIR="$INSTALL_ROOT/.sd-backup-env-$$"
 SWAP_STARTED=0
 
 validate_platform() {
-  local arch model os_id os_version available_kb required_kb mem_kb
+  local arch model os_id os_version mem_kb
   arch="$(uname -m)"
   [ "$arch" = "aarch64" ] || { fail "Unsupported architecture: $arch. Raspberry Pi OS 64-bit (aarch64) is required."; exit 1; }
 
@@ -188,10 +377,6 @@ validate_platform() {
     raspbian|debian|ubuntu) ;;
     *) fail "Unsupported operating system: ${os_id:-unknown}. Raspbian, Debian, or Ubuntu is required."; exit 1 ;;
   esac
-
-  available_kb="$(df -Pk "$INSTALL_ROOT" | awk 'NR==2 {print $4}')"
-  required_kb=$(( DOWNLOAD_MODELS == 1 ? 25 * 1024 * 1024 : 15 * 1024 * 1024 ))
-  [ "${available_kb:-0}" -ge "$required_kb" ] || { fail "Insufficient free disk space. At least $((required_kb / 1024 / 1024)) GiB is required."; exit 1; }
 
   mem_kb="$(awk '/MemTotal:/ {print $2}' /proc/meminfo)"
   [ "${mem_kb:-0}" -ge $((4 * 1024 * 1024)) ] || { fail "At least 4 GiB of RAM is required."; exit 1; }
@@ -214,9 +399,9 @@ cat <<SUMMARY
 Install summary
 ---------------
 Install files: $INSTALL_ROOT
-Models:        $([ "$DOWNLOAD_MODELS" = "1" ] && echo "on" || echo "off")
+Models:        $(selected_models_label)
 GUI:           $([ "$INCLUDE_GUI" = "1" ] && echo "on" || echo "off")
-Desktop link:  $([ "$CREATE_DESKTOP" = "1" ] && echo "on" || echo "off")
+Desktop Icon:  $([ "$CREATE_DESKTOP" = "1" ] && echo "on" || echo "off")
 Menu launcher: $([ "$CREATE_MENU" = "1" ] && echo "on" || echo "off")
 
 SUMMARY
@@ -265,12 +450,109 @@ sed -i 's/run_pip(f"install {clip_package}", "clip")/run_pip(f"install --no-buil
 
 download_if_missing() {
   local url="$1" destination="$2" temporary="${2}.part" expected_hash actual_hash
+  local headers file_size display_size chunk_size start end expected_size actual_size chunk download_failed
+  local total_downloaded overall_pct part_pct filled empty fill_text empty_text progress_line running proc_state
+  local bar_width=5
+  local -a chunks=() pids=() part_pcts=(0 0 0 0 0) part_bars=("-----" "-----" "-----" "-----" "-----")
+
   if [ ! -f "$destination" ]; then
     mkdir -p "$(dirname "$destination")"
-    rm -f "$temporary"
-    expected_hash="$(curl -fsSIL "$url" | tr -d '\r' | awk -F': ' 'tolower($1)=="x-linked-etag" {gsub(/[" ]/, "", $2); print $2}' | tail -n1 || true)"
+    rm -f "$temporary" "${temporary}.chunk"*
+
+    headers="$(curl -fsSIL "$url" | tr -d '\r' || true)"
+    expected_hash="$(printf '%s\n' "$headers" | awk -F': ' 'tolower($1)=="x-linked-etag" {gsub(/[" ]/, "", $2); print $2}' | tail -n1)"
+    file_size="$(printf '%s\n' "$headers" | awk -F': ' 'tolower($1)=="x-linked-size" {gsub(/[[:space:]]/, "", $2); print $2}' | tail -n1)"
+
     [[ "$expected_hash" =~ ^[0-9a-fA-F]{64}$ ]] || { fail "Could not obtain a trusted SHA-256 hash for: $url"; return 1; }
-    wget --https-only --secure-protocol=TLSv1_2 -O "$temporary" "$url"
+    [[ "$file_size" =~ ^[0-9]+$ ]] && [ "$file_size" -gt 0 ] || { fail "Could not obtain model size for 5-part download: $url"; return 1; }
+
+    chunk_size=$(( (file_size + 4) / 5 ))
+    display_size="$(awk -v bytes="$file_size" 'BEGIN { printf "%.2f GB", bytes / 1000000000 }')"
+    echo "  $(basename "$destination") ($display_size)"
+    printf '\r\033[K  Model download   0%% [P1:-----|P2:-----|P3:-----|P4:-----|P5:-----]'
+
+    for chunk in 0 1 2 3 4; do
+      start=$(( chunk * chunk_size ))
+      end=$(( start + chunk_size - 1 ))
+      [ "$end" -ge "$file_size" ] && end=$(( file_size - 1 ))
+      chunks[chunk]="${temporary}.chunk$((chunk + 1))"
+
+      curl -fL --retry 5 --retry-delay 2 --connect-timeout 30 \
+        --silent --show-error --range "${start}-${end}" \
+        --output "${chunks[chunk]}" "$url" &
+      pids[chunk]=$!
+    done
+
+    while true; do
+      total_downloaded=0
+      running=0
+
+      for chunk in 0 1 2 3 4; do
+        start=$(( chunk * chunk_size ))
+        end=$(( start + chunk_size - 1 ))
+        [ "$end" -ge "$file_size" ] && end=$(( file_size - 1 ))
+        expected_size=$(( end - start + 1 ))
+        actual_size="$(stat -c '%s' "${chunks[chunk]}" 2>/dev/null || echo 0)"
+        [ "$actual_size" -gt "$expected_size" ] && actual_size="$expected_size"
+
+        total_downloaded=$(( total_downloaded + actual_size ))
+        part_pct=$(( actual_size * 100 / expected_size ))
+        part_pcts[chunk]="$part_pct"
+
+        filled=$(( part_pct * bar_width / 100 ))
+        [ "$part_pct" -gt 0 ] && [ "$filled" -eq 0 ] && filled=1
+        empty=$(( bar_width - filled ))
+        printf -v fill_text '%*s' "$filled" ''
+        printf -v empty_text '%*s' "$empty" ''
+        fill_text="${fill_text// /#}"
+        empty_text="${empty_text// /-}"
+        part_bars[chunk]="${fill_text}${empty_text}"
+
+        if [ -r "/proc/${pids[chunk]}/stat" ]; then
+          proc_state="$(awk '{print $3}' "/proc/${pids[chunk]}/stat" 2>/dev/null || true)"
+          [ -n "$proc_state" ] && [ "$proc_state" != "Z" ] && running=1
+        fi
+      done
+
+      overall_pct=$(( total_downloaded * 100 / file_size ))
+      [ "$overall_pct" -gt 100 ] && overall_pct=100
+      printf -v progress_line '  Model download %3d%% [P1:%s|P2:%s|P3:%s|P4:%s|P5:%s]' \
+        "$overall_pct" "${part_bars[0]}" "${part_bars[1]}" "${part_bars[2]}" "${part_bars[3]}" "${part_bars[4]}"
+      printf '\r\033[K%s' "$progress_line"
+
+      [ "$running" -eq 0 ] && break
+      sleep 0.5
+    done
+    printf '\n'
+
+    download_failed=0
+    for chunk in 0 1 2 3 4; do
+      wait "${pids[chunk]}" || download_failed=1
+    done
+    if [ "$download_failed" -ne 0 ]; then
+      rm -f "$temporary" "${temporary}.chunk"*
+      fail "One of the 5 model download pieces failed: $url"
+      return 1
+    fi
+
+    for chunk in 0 1 2 3 4; do
+      start=$(( chunk * chunk_size ))
+      end=$(( start + chunk_size - 1 ))
+      [ "$end" -ge "$file_size" ] && end=$(( file_size - 1 ))
+      expected_size=$(( end - start + 1 ))
+      actual_size="$(stat -c '%s' "${chunks[chunk]}" 2>/dev/null || echo 0)"
+      [ "$actual_size" -eq "$expected_size" ] || {
+        rm -f "$temporary" "${temporary}.chunk"*
+        fail "Model download piece $((chunk + 1)) has the wrong size: $url"
+        return 1
+      }
+    done
+
+    cat "${chunks[@]}" > "$temporary"
+    rm -f "${chunks[@]}"
+
+    actual_size="$(stat -c '%s' "$temporary" 2>/dev/null || echo 0)"
+    [ "$actual_size" -eq "$file_size" ] || { rm -f "$temporary"; fail "Combined model file has the wrong size: $url"; return 1; }
     [ -s "$temporary" ] || { rm -f "$temporary"; fail "Downloaded file is empty: $url"; return 1; }
     actual_hash="$(sha256sum "$temporary" | awk '{print $1}')"
     [ "${actual_hash,,}" = "${expected_hash,,}" ] || { rm -f "$temporary"; fail "SHA-256 verification failed: $url"; return 1; }
@@ -278,16 +560,39 @@ download_if_missing() {
   fi
 }
 
+download_model_with_retries() {
+  local url="$1" destination="$2" attempt=1 max_attempts=20
+
+  while true; do
+    if download_if_missing "$url" "$destination"; then
+      return 0
+    fi
+
+    if [ "$attempt" -ge "$max_attempts" ]; then
+      fail "Model download could not complete after $max_attempts attempts: $url"
+      return 1
+    fi
+
+    attempt=$(( attempt + 1 ))
+    progress "Retrying model download (attempt $attempt/$max_attempts)..."
+    sleep 2
+  done
+}
+
 if [ "$DOWNLOAD_MODELS" = "1" ]; then
   progress "Downloading models..."
 
-  download_if_missing \
-  "https://huggingface.co/cyberdelia/CyberRealistic/resolve/main/CyberRealistic_V7.0_FP16.safetensors" \
-  "$STAGE_WEBUI_DIR/models/Stable-diffusion/CyberRealistic_V7.0_FP16.safetensors"
+  if [ "$DOWNLOAD_CYBERREALISTIC" = "1" ]; then
+    download_model_with_retries \
+    "https://huggingface.co/cyberdelia/CyberRealistic/resolve/main/CyberRealistic_V7.0_FP16.safetensors" \
+    "$STAGE_WEBUI_DIR/models/Stable-diffusion/CyberRealistic_V7.0_FP16.safetensors"
+  fi
 
-  download_if_missing \
-  "https://huggingface.co/SG161222/Realistic_Vision_V5.1_noVAE/resolve/main/Realistic_Vision_V5.1-inpainting.safetensors" \
-  "$STAGE_WEBUI_DIR/models/Stable-diffusion/Realistic_Vision_V5.1-inpainting.safetensors"
+  if [ "$DOWNLOAD_REALISTIC_VISION" = "1" ]; then
+    download_model_with_retries \
+    "https://huggingface.co/SG161222/Realistic_Vision_V5.1_noVAE/resolve/main/Realistic_Vision_V5.1-inpainting.safetensors" \
+    "$STAGE_WEBUI_DIR/models/Stable-diffusion/Realistic_Vision_V5.1-inpainting.safetensors"
+  fi
 fi
 
 progress "Activating completed installation..."
@@ -9849,3 +10154,24 @@ if [ "$CREATE_DESKTOP" = "1" ]; then
 fi
 ok "Run: $RUN_SD_PATH"
 sync
+
+if [ "$INCLUDE_GUI" = "1" ]; then
+  REBOOT_NOW=""
+  if [ -r /dev/tty ]; then
+    IFS= read -r -n1 -p "Reboot now to complete GUI setup? [y/N]: " REBOOT_NOW </dev/tty || true
+    printf '\n' >/dev/tty
+  elif [ -t 0 ]; then
+    IFS= read -r -n1 -p "Reboot now to complete GUI setup? [y/N]: " REBOOT_NOW || true
+    printf '\n'
+  fi
+  case "${REBOOT_NOW,,}" in
+    y)
+      ok "Rebooting..."
+      sync
+      sudo reboot
+      ;;
+    *)
+      ok "Reboot skipped. Reboot before using the GUI launcher."
+      ;;
+  esac
+fi
