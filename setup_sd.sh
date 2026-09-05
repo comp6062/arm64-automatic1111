@@ -250,13 +250,17 @@ MENU
 selected_models_label() {
   if [ "$DOWNLOAD_MODELS" != "1" ]; then
     echo "off"
-  elif [ "$DOWNLOAD_CYBERREALISTIC" = "1" ] && [ "$DOWNLOAD_REALISTIC_VISION" = "1" ]; then
-    echo "on - CyberRealistic + Realistic Vision"
-  elif [ "$DOWNLOAD_CYBERREALISTIC" = "1" ]; then
-    echo "on - CyberRealistic"
-  else
-    echo "on - Realistic Vision"
+    return
   fi
+
+  printf 'on'
+  if [ "$DOWNLOAD_CYBERREALISTIC" = "1" ]; then
+    printf '\n               - CyberRealistic_V7.0_FP16.safetensors (2.13 GB)'
+  fi
+  if [ "$DOWNLOAD_REALISTIC_VISION" = "1" ]; then
+    printf '\n               - Realistic_Vision_V5.1-inpainting.safetensors (4.27 GB)'
+  fi
+  printf '\n'
 }
 
 while true; do
